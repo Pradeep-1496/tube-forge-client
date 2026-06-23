@@ -1,1 +1,54 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --bg: #060608;
+  --surface: #0b0b0f;
+  --text: #f9fafb;
+  --muted: #9ca3af;
+  --border: rgba(255,255,255,0.1);
+  --border-subtle: rgba(255,255,255,0.06);
+  --accent: #6366f1;
+  --accent-weak: rgba(99,102,241,0.15);
+  --ring: rgba(99,102,241,0.35);
+  --danger: #ef4444;
+  --success: #10b981;
+  color-scheme: dark;
+}
+
+html.light {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --text: #111318;
+  --muted: #5f6b7a;
+  --border: rgba(0,0,0,0.1);
+  --border-subtle: rgba(0,0,0,0.06);
+  --accent: #4f46e5;
+  --accent-weak: rgba(79,70,229,0.12);
+  --ring: rgba(79,70,229,0.25);
+  --danger: #dc2626;
+  --success: #059669;
+  color-scheme: light;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; }
+
+img, figure { max-width: 100%; display: block; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+::selection { background: rgba(99,102,241,0.35); }
