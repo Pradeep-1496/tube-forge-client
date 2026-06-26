@@ -21,23 +21,11 @@ import { AuthService } from '../../../services/auth.service';
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
           <div class="field">
             <label for="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              formControlName="email"
-              placeholder="you@example.com"
-              required
-            />
+            <input id="email" type="email" formControlName="email" placeholder="you@example.com" required />
           </div>
           <div class="field">
             <label for="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              formControlName="password"
-              placeholder="••••••••"
-              required
-            />
+            <input id="password" type="password" formControlName="password" placeholder="••••••••" required />
           </div>
           <div class="error" *ngIf="error()">{{ error() }}</div>
           <button type="submit" class="btn primary full" [disabled]="form.invalid || submitting()">
@@ -195,6 +183,10 @@ export class LoginComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
     });
+
+    if (this.auth.getToken()) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   onSubmit() {

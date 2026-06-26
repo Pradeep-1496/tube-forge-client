@@ -8,6 +8,7 @@ import { AssetsComponent } from './pages/assets/assets.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { LoginComponent } from './pages/auth/login/login.component';
 import { RegisterComponent } from './pages/auth/register/register.component';
+import { ContentComponent } from './pages/content/content.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -22,6 +23,7 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'videos', component: VideosComponent },
       { path: 'create', component: CreateVideoComponent },
+      { path: 'content', component: ContentComponent },
       { path: 'channels', component: ChannelsComponent },
       { path: 'assets', component: AssetsComponent },
       { path: 'settings', component: SettingsComponent },

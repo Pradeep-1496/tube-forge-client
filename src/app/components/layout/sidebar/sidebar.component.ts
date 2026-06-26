@@ -27,6 +27,10 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">+</span>
           <span>Create</span>
         </a>
+        <a routerLink="/content" routerLinkActive="active" class="nav-item">
+          <span class="icon">📄</span>
+          <span>Content</span>
+        </a>
         <a routerLink="/channels" routerLinkActive="active" class="nav-item">
           <span class="icon">◎</span>
           <span>Channels</span>

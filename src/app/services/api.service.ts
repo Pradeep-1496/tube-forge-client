@@ -22,14 +22,15 @@ export interface YouTubeChannel {
 export interface Channel {
   id: string;
   name: string;
-  description?: string;
-  isMainChannel: boolean;
-  uploadSchedule?: string;
-  brandingConfig?: Record<string, unknown>;
-  contentCategories?: string[];
-  defaultTags?: string[];
-  isActive?: boolean;
+  channelId: string;
+  clientId: string;
+  clientSecret: string;
+  accessToken: string;
+  refreshToken: string;
+  expiryDate: number;
+  userId: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Video {
@@ -111,22 +112,11 @@ export interface BackgroundVideo {
 
 export interface ContentItem {
   id: string;
-  channelId: string;
   title: string;
   content: string;
-  contentType: 'conversation' | 'quote' | string;
-  status: string;
-  videoPath?: string | null;
-  thumbnailPath?: string | null;
-  youtubeVideoId?: string | null;
-  youtubeUrl?: string | null;
-  scheduledDate?: string | null;
-  youtubeTitle?: string | null;
-  youtubeDescription?: string | null;
-  tags?: string | null;
-  hashtags?: string | null;
-  privacyStatus?: string | null;
-  language?: string | null;
+  type: string;
+  visibility: string;
+  userId: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -210,12 +200,12 @@ export interface GenerateResult {
 
 export interface ChannelForm {
   name: string;
-  description: string;
-  isMainChannel: boolean;
-  uploadSchedule: string;
-  brandingConfig: Record<string, unknown>;
-  contentCategories: string[];
-  defaultTags: string[];
+  channelId: string;
+  clientId: string;
+  clientSecret: string;
+  accessToken: string;
+  refreshToken: string;
+  expiryDate: number;
 }
 
 export interface VideoForm {
@@ -248,17 +238,33 @@ export class ApiService {
   constructor(private readonly http: HttpClient) {}
 
   login(payload: LoginRequest) {
-    return this.http.post<LoginResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.login}`, payload);
+    return this.http.post<LoginResponse>(
+      `${this.baseUrl}${environment.apiEndpoints.auth.login}`,
+      payload,
+    );
   }
 
   register(payload: RegisterRequest) {
-    return this.http.post<RegisterResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.register}`, payload);
+    return this.http.post<RegisterResponse>(
+      `${this.baseUrl}${environment.apiEndpoints.auth.register}`,
+      payload,
+    );
   }
 
   private createStatsCache() {
     return this.http
-      .get<Stats>(`${this.baseUrl}/api/dynamic-assets/stats`)
-      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
+      .get<Channel[]>(`${this.baseUrl}${environment.apiEndpoints.channels.findAll}`)
+      .pipe(
+        map((channels) => ({
+          totalChannels: channels.length,
+          totalVideos: 0,
+          published: 0,
+          pending: 0,
+          failed: 0,
+          totalAssets: 0,
+        })),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
   }
 
   getStats() {
@@ -273,15 +279,23 @@ export class ApiService {
   }
 
   getChannel(id: string) {
-    return this.http.get<Channel>(`${this.baseUrl}${environment.apiEndpoints.channels.findOne(id)}`);
+    return this.http.get<Channel>(
+      `${this.baseUrl}${environment.apiEndpoints.channels.findOne(id)}`,
+    );
   }
 
   createChannel(payload: Partial<Channel>) {
-    return this.http.post<Channel>(`${this.baseUrl}${environment.apiEndpoints.channels.create}`, payload);
+    return this.http.post<Channel>(
+      `${this.baseUrl}${environment.apiEndpoints.channels.create}`,
+      payload,
+    );
   }
 
   updateChannel(id: string, payload: Partial<Channel>) {
-    return this.http.put<Channel>(`${this.baseUrl}${environment.apiEndpoints.channels.update(id)}`, payload);
+    return this.http.put<Channel>(
+      `${this.baseUrl}${environment.apiEndpoints.channels.update(id)}`,
+      payload,
+    );
   }
 
   deleteChannel(id: string) {
@@ -305,53 +319,82 @@ export class ApiService {
   }
 
   getTemplates() {
-    return this.http.get<Template[]>(`${this.baseUrl}${environment.apiEndpoints.templates.findAll}`);
+    return this.http.get<Template[]>(
+      `${this.baseUrl}${environment.apiEndpoints.templates.findAll}`,
+    );
   }
 
   getTemplate(id: string) {
-    return this.http.get<Template>(`${this.baseUrl}${environment.apiEndpoints.templates.findOne(id)}`);
+    return this.http.get<Template>(
+      `${this.baseUrl}${environment.apiEndpoints.templates.findOne(id)}`,
+    );
   }
 
   createTemplate(payload: Partial<Template>) {
-    return this.http.post<Template>(`${this.baseUrl}${environment.apiEndpoints.templates.create}`, payload);
+    return this.http.post<Template>(
+      `${this.baseUrl}${environment.apiEndpoints.templates.create}`,
+      payload,
+    );
   }
 
   updateTemplate(id: string, payload: Partial<Template>) {
-    return this.http.put<Template>(`${this.baseUrl}${environment.apiEndpoints.templates.update(id)}`, payload);
+    return this.http.put<Template>(
+      `${this.baseUrl}${environment.apiEndpoints.templates.update(id)}`,
+      payload,
+    );
   }
 
   deleteTemplate(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.templates.remove(id)}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${environment.apiEndpoints.templates.remove(id)}`,
+    );
   }
 
   generateVideo(id: string) {
-    return this.http.post<GenerateResult>(`${this.baseUrl}${environment.apiEndpoints.videoGeneration.generate(id)}`, {});
+    return this.http.post<GenerateResult>(
+      `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generate(id)}`,
+      {},
+    );
   }
 
   generateFromVideo(videoContentId: string, backgroundVideoId: string) {
-    return this.http.post<GenerateResult>(`${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromVideo(videoContentId, backgroundVideoId)}`, {});
+    return this.http.post<GenerateResult>(
+      `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromVideo(videoContentId, backgroundVideoId)}`,
+      {},
+    );
   }
 
   getThemes() {
-    return this.http.get<Theme[]>(`${this.baseUrl}${environment.apiEndpoints.videoGeneration.themes}`);
+    return this.http.get<Theme[]>(
+      `${this.baseUrl}${environment.apiEndpoints.videoGeneration.themes}`,
+    );
   }
 
   getBackgrounds() {
-    return this.http.get<BackgroundAsset[]>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findAll}`);
+    return this.http.get<BackgroundAsset[]>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.findAll}`,
+    );
   }
 
   getBackground(id: string) {
-    return this.http.get<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findOne(id)}`);
+    return this.http.get<BackgroundAsset>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.findOne(id)}`,
+    );
   }
 
   uploadBackground(file: File) {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`, form);
+    return this.http.post<BackgroundAsset>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`,
+      form,
+    );
   }
 
   deleteBackground(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.remove(id)}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.remove(id)}`,
+    );
   }
 
   getAudios() {
@@ -359,13 +402,18 @@ export class ApiService {
   }
 
   getAudio(id: string) {
-    return this.http.get<AudioAsset>(`${this.baseUrl}${environment.apiEndpoints.audios.findOne(id)}`);
+    return this.http.get<AudioAsset>(
+      `${this.baseUrl}${environment.apiEndpoints.audios.findOne(id)}`,
+    );
   }
 
   uploadAudio(file: File) {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<AudioAsset>(`${this.baseUrl}${environment.apiEndpoints.audios.upload}`, form);
+    return this.http.post<AudioAsset>(
+      `${this.baseUrl}${environment.apiEndpoints.audios.upload}`,
+      form,
+    );
   }
 
   deleteAudio(id: string) {
@@ -373,37 +421,56 @@ export class ApiService {
   }
 
   getBackgroundVideos() {
-    return this.http.get<BackgroundVideo[]>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.findAll}`);
+    return this.http.get<BackgroundVideo[]>(
+      `${this.baseUrl}${environment.apiEndpoints.backgroundVideos.findAll}`,
+    );
   }
 
   getBackgroundVideo(id: string) {
-    return this.http.get<BackgroundVideo>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.findOne(id)}`);
+    return this.http.get<BackgroundVideo>(
+      `${this.baseUrl}${environment.apiEndpoints.backgroundVideos.findOne(id)}`,
+    );
   }
 
   uploadBackgroundVideo(file: File) {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<BackgroundVideo>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.upload}`, form);
+    return this.http.post<BackgroundVideo>(
+      `${this.baseUrl}${environment.apiEndpoints.backgroundVideos.upload}`,
+      form,
+    );
   }
 
   deleteBackgroundVideo(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.remove(id)}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${environment.apiEndpoints.backgroundVideos.remove(id)}`,
+    );
   }
 
   getContentItems() {
-    return this.http.get<ContentItem[]>(`${this.baseUrl}${environment.apiEndpoints.content.findAll}`);
+    return this.http.get<ContentItem[]>(
+      `${this.baseUrl}${environment.apiEndpoints.content.findAll}`,
+    );
   }
 
   getContentItem(id: string) {
-    return this.http.get<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.findOne(id)}`);
+    return this.http.get<ContentItem>(
+      `${this.baseUrl}${environment.apiEndpoints.content.findOne(id)}`,
+    );
   }
 
   createContentItem(payload: Partial<ContentItem>) {
-    return this.http.post<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.create}`, payload);
+    return this.http.post<ContentItem>(
+      `${this.baseUrl}${environment.apiEndpoints.content.create}`,
+      payload,
+    );
   }
 
   updateContentItem(id: string, payload: Partial<ContentItem>) {
-    return this.http.put<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.update(id)}`, payload);
+    return this.http.put<ContentItem>(
+      `${this.baseUrl}${environment.apiEndpoints.content.update(id)}`,
+      payload,
+    );
   }
 
   deleteContentItem(id: string) {
@@ -411,37 +478,56 @@ export class ApiService {
   }
 
   getMetadata() {
-    return this.http.get<MetadataItem[]>(`${this.baseUrl}${environment.apiEndpoints.metadata.findAll}`);
+    return this.http.get<MetadataItem[]>(
+      `${this.baseUrl}${environment.apiEndpoints.metadata.findAll}`,
+    );
   }
 
   getMetadataItem(id: string) {
-    return this.http.get<MetadataItem>(`${this.baseUrl}${environment.apiEndpoints.metadata.findOne(id)}`);
+    return this.http.get<MetadataItem>(
+      `${this.baseUrl}${environment.apiEndpoints.metadata.findOne(id)}`,
+    );
   }
 
   createMetadataItem(payload: Partial<MetadataItem>) {
-    return this.http.post<MetadataItem>(`${this.baseUrl}${environment.apiEndpoints.metadata.create}`, payload);
+    return this.http.post<MetadataItem>(
+      `${this.baseUrl}${environment.apiEndpoints.metadata.create}`,
+      payload,
+    );
   }
 
   getSubscribeImages() {
-    return this.http.get<SubscribeImage[]>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.findAll}`);
+    return this.http.get<SubscribeImage[]>(
+      `${this.baseUrl}${environment.apiEndpoints.subscribeImages.findAll}`,
+    );
   }
 
   getSubscribeImage(id: string) {
-    return this.http.get<SubscribeImage>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.findOne(id)}`);
+    return this.http.get<SubscribeImage>(
+      `${this.baseUrl}${environment.apiEndpoints.subscribeImages.findOne(id)}`,
+    );
   }
 
   uploadSubscribeImage(file: File) {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<SubscribeImage>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.upload}`, form);
+    return this.http.post<SubscribeImage>(
+      `${this.baseUrl}${environment.apiEndpoints.subscribeImages.upload}`,
+      form,
+    );
   }
 
   updateSubscribeImage(id: string, payload: Partial<SubscribeImage>) {
-    return this.http.put<SubscribeImage>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.update(id)}`, payload);
+    return this.http.put<SubscribeImage>(
+      `${this.baseUrl}${environment.apiEndpoints.subscribeImages.update(id)}`,
+      payload,
+    );
   }
 
   deleteSubscribeImage(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.remove(id)}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${environment.apiEndpoints.subscribeImages.remove(id)}`,
+    );
   }
 
   getTextEffects() {
@@ -457,33 +543,50 @@ export class ApiService {
   }
 
   getBackgroundAssets() {
-    return this.http.get<BackgroundAsset[]>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findAll}`);
+    return this.http.get<BackgroundAsset[]>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.findAll}`,
+    );
   }
 
   uploadBackgroundAsset(file: File) {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`, form);
+    return this.http.post<BackgroundAsset>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`,
+      form,
+    );
   }
 
   updateBackgroundAsset(id: string, payload: Partial<BackgroundAsset>) {
-    return this.http.put<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findOne(id)}`, payload);
+    return this.http.put<BackgroundAsset>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.findOne(id)}`,
+      payload,
+    );
   }
 
   deleteBackgroundAsset(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.remove(id)}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}${environment.apiEndpoints.backgrounds.remove(id)}`,
+    );
   }
 
   getVideosByChannel(channelId: string) {
-    return this.http.get<ContentItem[]>(`${this.baseUrl}${environment.apiEndpoints.content.findAll}`);
+    return this.http.get<ContentItem[]>(
+      `${this.baseUrl}${environment.apiEndpoints.content.findAll}`,
+    );
   }
 
   getVideo(id: string) {
-    return this.http.get<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.findOne(id)}`);
+    return this.http.get<ContentItem>(
+      `${this.baseUrl}${environment.apiEndpoints.content.findOne(id)}`,
+    );
   }
 
   createVideo(payload: Partial<ContentItem>) {
-    return this.http.post<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.create}`, payload);
+    return this.http.post<ContentItem>(
+      `${this.baseUrl}${environment.apiEndpoints.content.create}`,
+      payload,
+    );
   }
 
   deleteVideo(id: string) {
