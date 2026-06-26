@@ -6,8 +6,12 @@ import { CreateVideoComponent } from './pages/create-video/create-video.componen
 import { ChannelsComponent } from './pages/channels/channels.component';
 import { AssetsComponent } from './pages/assets/assets.component';
 import { SettingsComponent } from './pages/settings/settings.component';
+import { LoginComponent } from './pages/auth/login/login.component';
+import { RegisterComponent } from './pages/auth/register/register.component';
 
 export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
   {
     path: '',
     component: LayoutComponent,

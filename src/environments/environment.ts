@@ -1,57 +1,67 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:4000',
-  endpoints: {
-    // YouTube Management
-    youtube: {
-      channels: '/youtube/channels',
-      authUrl: '/youtube/auth/url',
-      authCallback: '/youtube/auth/callback',
-      channelInfo: '/youtube/channel-info',
-      upload: '/youtube/upload',
-      queue: '/youtube/queue',
-      enqueue: '/youtube/queue/enqueue',
-      refreshTokens: (id: string) => `/youtube/tokens/${id}/refresh`,
-      uploadable: '/youtube/uploadable',
+  apiBaseUrl: 'http://localhost:3000',
+  apiEndpoints: {
+    auth: {
+      register: '/api/auth/register',
+      login: '/api/auth/login',
     },
-
-    // Video Management
-    videoManagement: {
-      videos: '/video-management/videos',
-      base: '/video-management',
-      byChannel: (channelId: string) => `/video-management/channels/${channelId}/videos`,
-      byId: (id: string) => `/video-management/${id}`,
-      generate: (id: string) => `/video-management/${id}/generate`,
-      upload: (id: string) => `/video-management/${id}/upload`,
-      byStatus: (status: string) => `/video-management/status/${status}`,
-      youtubeMetadata: (id: string) => `/video-management/${id}/youtube-metadata`,
+    channels: {
+      create: '/api/channels',
+      findAll: '/api/channels',
+      findOne: (id: string) => `/api/channels/${id}`,
+      update: (id: string) => `/api/channels/${id}`,
+      remove: (id: string) => `/api/channels/${id}`,
     },
-
-    // Dynamic Assets
-    dynamicAssets: {
-      channels: '/dynamic-assets/channels',
-      channelById: (id: string) => `/dynamic-assets/channels/${id}`,
-      textEffects: '/dynamic-assets/text-effects',
-      textEffectById: (id: string) => `/dynamic-assets/text-effects/${id}`,
-      backgroundAssets: '/dynamic-assets/background-assets',
-      backgroundAssetById: (id: string) => `/dynamic-assets/background-assets/${id}`,
-      stats: '/dynamic-assets/stats',
+    templates: {
+      create: '/api/templates',
+      findAll: '/api/templates',
+      findOne: (id: string) => `/api/templates/${id}`,
+      update: (id: string) => `/api/templates/${id}`,
+      remove: (id: string) => `/api/templates/${id}`,
     },
-
-    // Conversations
-    conversations: {
-      base: '/conversations',
-      byId: (id: string) => `/conversations/${id}`,
-      generate: (id: string) => `/conversations/${id}/generate`,
+    videoGeneration: {
+      generate: (id: string) => `/api/video-generation/generate/${id}`,
+      generateFromVideo: (videoContentId: string, backgroundVideoId: string) =>
+        `/api/video-generation/generate-from-video/${videoContentId}/${backgroundVideoId}`,
+      themes: '/api/video-generation/themes',
     },
-
-    // Quotes
-    quotes: {
-      base: '/quotes',
-      byId: (id: string) => `/quotes/${id}`,
-      backgrounds: '/quotes/assets/backgrounds',
-      backgroundById: (id: string) => `/quotes/assets/backgrounds/${id}`,
-      generate: (id: string) => `/quotes/${id}/generate`,
+    backgrounds: {
+      upload: '/api/backgrounds/upload',
+      findAll: '/api/backgrounds',
+      findOne: (id: string) => `/api/backgrounds/${id}`,
+      remove: (id: string) => `/api/backgrounds/${id}`,
+    },
+    audios: {
+      upload: '/api/audios/upload',
+      findAll: '/api/audios',
+      findOne: (id: string) => `/api/audios/${id}`,
+      remove: (id: string) => `/api/audios/${id}`,
+    },
+    backgroundVideos: {
+      upload: '/api/background-videos/upload',
+      findAll: '/api/background-videos',
+      findOne: (id: string) => `/api/background-videos/${id}`,
+      remove: (id: string) => `/api/background-videos/${id}`,
+    },
+    content: {
+      create: '/api/content',
+      findAll: '/api/content',
+      findOne: (id: string) => `/api/content/${id}`,
+      update: (id: string) => `/api/content/${id}`,
+      remove: (id: string) => `/api/content/${id}`,
+    },
+    metadata: {
+      create: '/api/metadata',
+      findAll: '/api/metadata',
+      findOne: (id: string) => `/api/metadata/${id}`,
+    },
+    subscribeImages: {
+      upload: '/api/subscribe-images/upload',
+      findAll: '/api/subscribe-images',
+      findOne: (id: string) => `/api/subscribe-images/${id}`,
+      update: (id: string) => `/api/subscribe-images/${id}`,
+      remove: (id: string) => `/api/subscribe-images/${id}`,
     },
   },
 };

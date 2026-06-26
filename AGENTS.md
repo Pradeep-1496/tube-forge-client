@@ -4,13 +4,13 @@ Single Angular 21 app (standalone components, SSR, Vitest).
 
 ## Commands
 
-| Action | Command | Notes |
-|--------|---------|-------|
-| Dev server | `npm start` or `ng serve` | Port 4200, auto-reload |
-| Build | `npm run build` | Output to `dist/`, prod by default |
-| Test (Vitest) | `npm test` or `ng test` | Uses `@angular/build:unit-test` builder |
-| Watch build | `npm run watch` | Dev config, non-optimized |
-| SSR server | `npm run serve:ssr:video-gen-client` | Runs Express on `PORT` (default 4000) |
+| Action        | Command                              | Notes                                   |
+| ------------- | ------------------------------------ | --------------------------------------- |
+| Dev server    | `npm start` or `ng serve`            | Port 4200, auto-reload                  |
+| Build         | `npm run build`                      | Output to `dist/`, prod by default      |
+| Test (Vitest) | `npm test` or `ng test`              | Uses `@angular/build:unit-test` builder |
+| Watch build   | `npm run watch`                      | Dev config, non-optimized               |
+| SSR server    | `npm run serve:ssr:video-gen-client` | Runs Express on `PORT` (default 3000)   |
 
 ## Architecture
 

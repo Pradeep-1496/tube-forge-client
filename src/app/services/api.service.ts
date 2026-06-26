@@ -78,6 +78,107 @@ export interface BackgroundAsset {
   createdAt?: string;
 }
 
+export interface Template {
+  id: string;
+  name: string;
+  description?: string;
+  config: Record<string, unknown>;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface AudioAsset {
+  id: string;
+  name: string;
+  category: string;
+  filePath: string;
+  mimeType: string;
+  sizeBytes?: number;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface BackgroundVideo {
+  id: string;
+  name: string;
+  category: string;
+  filePath: string;
+  mimeType: string;
+  sizeBytes?: number;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface ContentItem {
+  id: string;
+  channelId: string;
+  title: string;
+  content: string;
+  contentType: 'conversation' | 'quote' | string;
+  status: string;
+  videoPath?: string | null;
+  thumbnailPath?: string | null;
+  youtubeVideoId?: string | null;
+  youtubeUrl?: string | null;
+  scheduledDate?: string | null;
+  youtubeTitle?: string | null;
+  youtubeDescription?: string | null;
+  tags?: string | null;
+  hashtags?: string | null;
+  privacyStatus?: string | null;
+  language?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MetadataItem {
+  id: string;
+  [key: string]: unknown;
+}
+
+export interface SubscribeImage {
+  id: string;
+  name: string;
+  category: string;
+  filePath: string;
+  mimeType: string;
+  sizeBytes?: number;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name?: string;
+}
+
+export interface LoginResponse {
+  name: string;
+  email: string;
+  access_token: string;
+}
+
+export interface RegisterResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  updatedAt: string;
+  createdAt: string;
+}
+
+export interface Theme {
+  id: string;
+  name: string;
+  config: Record<string, unknown>;
+}
+
 export interface Stats {
   totalChannels: number;
   totalVideos: number;
@@ -139,16 +240,24 @@ export interface TextEffectForm {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = `${environment.apiUrl}/api`;
+  private readonly baseUrl = environment.apiBaseUrl;
   private statsCache$: ReturnType<typeof this.createStatsCache> | undefined;
 
   readonly loading = signal(false);
 
   constructor(private readonly http: HttpClient) {}
 
+  login(payload: LoginRequest) {
+    return this.http.post<AuthResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.login}`, payload);
+  }
+
+  register(payload: RegisterRequest) {
+    return this.http.post<AuthResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.register}`, payload);
+  }
+
   private createStatsCache() {
     return this.http
-      .get<Stats>(`${this.baseUrl}/dynamic-assets/stats`)
+      .get<Stats>(`${this.baseUrl}/api/dynamic-assets/stats`)
       .pipe(shareReplay({ bufferSize: 1, refCount: true }));
   }
 
@@ -160,98 +269,224 @@ export class ApiService {
   }
 
   getChannels() {
-    return this.http.get<Channel[]>(`${this.baseUrl}/dynamic-assets/channels`);
-  }
-
-  getYouTubeChannels() {
-    return this.http.get<YouTubeChannel[]>(`${this.baseUrl}/youtube/channels`);
+    return this.http.get<Channel[]>(`${this.baseUrl}${environment.apiEndpoints.channels.findAll}`);
   }
 
   getChannel(id: string) {
-    return this.http.get<Channel>(`${this.baseUrl}/dynamic-assets/channels/${id}`);
+    return this.http.get<Channel>(`${this.baseUrl}${environment.apiEndpoints.channels.findOne(id)}`);
   }
 
-  createChannel(payload: ChannelForm) {
-    return this.http.post<Channel>(`${this.baseUrl}/dynamic-assets/channels`, payload);
+  createChannel(payload: Partial<Channel>) {
+    return this.http.post<Channel>(`${this.baseUrl}${environment.apiEndpoints.channels.create}`, payload);
   }
 
-  updateChannel(id: string, payload: Partial<ChannelForm>) {
-    return this.http.put<Channel>(`${this.baseUrl}/dynamic-assets/channels/${id}`, payload);
+  updateChannel(id: string, payload: Partial<Channel>) {
+    return this.http.put<Channel>(`${this.baseUrl}${environment.apiEndpoints.channels.update(id)}`, payload);
   }
 
   deleteChannel(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}/dynamic-assets/channels/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.channels.remove(id)}`);
+  }
+
+  getYouTubeChannels() {
+    return this.http.get<YouTubeChannel[]>(`${this.baseUrl}/api/youtube/channels`);
+  }
+
+  getYouTubeChannelInfo() {
+    return this.http.get<YouTubeChannelInfo>(`${this.baseUrl}/api/youtube/channel-info`);
+  }
+
+  getYouTubeAuthUrl() {
+    return this.http.get<{ url: string }>(`${this.baseUrl}/api/youtube/auth/url`);
+  }
+
+  uploadVideoToYouTube(payload: { videoId: string; publishAt?: string }) {
+    return this.http.post<UploadResult>(`${this.baseUrl}/api/youtube/upload`, payload);
+  }
+
+  getTemplates() {
+    return this.http.get<Template[]>(`${this.baseUrl}${environment.apiEndpoints.templates.findAll}`);
+  }
+
+  getTemplate(id: string) {
+    return this.http.get<Template>(`${this.baseUrl}${environment.apiEndpoints.templates.findOne(id)}`);
+  }
+
+  createTemplate(payload: Partial<Template>) {
+    return this.http.post<Template>(`${this.baseUrl}${environment.apiEndpoints.templates.create}`, payload);
+  }
+
+  updateTemplate(id: string, payload: Partial<Template>) {
+    return this.http.put<Template>(`${this.baseUrl}${environment.apiEndpoints.templates.update(id)}`, payload);
+  }
+
+  deleteTemplate(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.templates.remove(id)}`);
+  }
+
+  generateVideo(id: string) {
+    return this.http.post<GenerateResult>(`${this.baseUrl}${environment.apiEndpoints.videoGeneration.generate(id)}`, {});
+  }
+
+  generateFromVideo(videoContentId: string, backgroundVideoId: string) {
+    return this.http.post<GenerateResult>(`${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromVideo(videoContentId, backgroundVideoId)}`, {});
+  }
+
+  getThemes() {
+    return this.http.get<Theme[]>(`${this.baseUrl}${environment.apiEndpoints.videoGeneration.themes}`);
+  }
+
+  getBackgrounds() {
+    return this.http.get<BackgroundAsset[]>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findAll}`);
+  }
+
+  getBackground(id: string) {
+    return this.http.get<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findOne(id)}`);
+  }
+
+  uploadBackground(file: File) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`, form);
+  }
+
+  deleteBackground(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.remove(id)}`);
+  }
+
+  getAudios() {
+    return this.http.get<AudioAsset[]>(`${this.baseUrl}${environment.apiEndpoints.audios.findAll}`);
+  }
+
+  getAudio(id: string) {
+    return this.http.get<AudioAsset>(`${this.baseUrl}${environment.apiEndpoints.audios.findOne(id)}`);
+  }
+
+  uploadAudio(file: File) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<AudioAsset>(`${this.baseUrl}${environment.apiEndpoints.audios.upload}`, form);
+  }
+
+  deleteAudio(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.audios.remove(id)}`);
+  }
+
+  getBackgroundVideos() {
+    return this.http.get<BackgroundVideo[]>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.findAll}`);
+  }
+
+  getBackgroundVideo(id: string) {
+    return this.http.get<BackgroundVideo>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.findOne(id)}`);
+  }
+
+  uploadBackgroundVideo(file: File) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<BackgroundVideo>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.upload}`, form);
+  }
+
+  deleteBackgroundVideo(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.backgroundVideos.remove(id)}`);
+  }
+
+  getContentItems() {
+    return this.http.get<ContentItem[]>(`${this.baseUrl}${environment.apiEndpoints.content.findAll}`);
+  }
+
+  getContentItem(id: string) {
+    return this.http.get<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.findOne(id)}`);
+  }
+
+  createContentItem(payload: Partial<ContentItem>) {
+    return this.http.post<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.create}`, payload);
+  }
+
+  updateContentItem(id: string, payload: Partial<ContentItem>) {
+    return this.http.put<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.update(id)}`, payload);
+  }
+
+  deleteContentItem(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.content.remove(id)}`);
+  }
+
+  getMetadata() {
+    return this.http.get<MetadataItem[]>(`${this.baseUrl}${environment.apiEndpoints.metadata.findAll}`);
+  }
+
+  getMetadataItem(id: string) {
+    return this.http.get<MetadataItem>(`${this.baseUrl}${environment.apiEndpoints.metadata.findOne(id)}`);
+  }
+
+  createMetadataItem(payload: Partial<MetadataItem>) {
+    return this.http.post<MetadataItem>(`${this.baseUrl}${environment.apiEndpoints.metadata.create}`, payload);
+  }
+
+  getSubscribeImages() {
+    return this.http.get<SubscribeImage[]>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.findAll}`);
+  }
+
+  getSubscribeImage(id: string) {
+    return this.http.get<SubscribeImage>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.findOne(id)}`);
+  }
+
+  uploadSubscribeImage(file: File) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<SubscribeImage>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.upload}`, form);
+  }
+
+  updateSubscribeImage(id: string, payload: Partial<SubscribeImage>) {
+    return this.http.put<SubscribeImage>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.update(id)}`, payload);
+  }
+
+  deleteSubscribeImage(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.subscribeImages.remove(id)}`);
   }
 
   getTextEffects() {
-    return this.http.get<TextEffect[]>(`${this.baseUrl}/dynamic-assets/text-effects`);
+    return this.http.get<TextEffect[]>(`${this.baseUrl}/api/dynamic-assets/text-effects`);
   }
 
-  createTextEffect(payload: TextEffectForm) {
-    return this.http.post<TextEffect>(`${this.baseUrl}/dynamic-assets/text-effects`, payload);
+  createTextEffect(payload: Partial<TextEffect>) {
+    return this.http.post<TextEffect>(`${this.baseUrl}/api/dynamic-assets/text-effects`, payload);
   }
 
   deleteTextEffect(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}/dynamic-assets/text-effects/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/api/dynamic-assets/text-effects/${id}`);
   }
 
   getBackgroundAssets() {
-    return this.http.get<BackgroundAsset[]>(`${this.baseUrl}/dynamic-assets/background-assets`);
+    return this.http.get<BackgroundAsset[]>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findAll}`);
   }
 
   uploadBackgroundAsset(file: File) {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<BackgroundAsset>(
-      `${this.baseUrl}/dynamic-assets/background-assets`,
-      form,
-    );
+    return this.http.post<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`, form);
   }
 
   updateBackgroundAsset(id: string, payload: Partial<BackgroundAsset>) {
-    return this.http.put<BackgroundAsset>(
-      `${this.baseUrl}/dynamic-assets/background-assets/${id}`,
-      payload,
-    );
+    return this.http.put<BackgroundAsset>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.findOne(id)}`, payload);
   }
 
   deleteBackgroundAsset(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}/dynamic-assets/background-assets/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.backgrounds.remove(id)}`);
   }
 
   getVideosByChannel(channelId: string) {
-    const url = `${this.baseUrl}${environment.endpoints.videoManagement.byChannel(channelId)}`;
-    return this.http.get<Video[]>(url);
+    return this.http.get<ContentItem[]>(`${this.baseUrl}${environment.apiEndpoints.content.findAll}`);
   }
 
   getVideo(id: string) {
-    return this.http.get<Video>(`${this.baseUrl}/video-management/videos/${id}`);
+    return this.http.get<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.findOne(id)}`);
   }
 
-  createVideo(payload: VideoForm) {
-    return this.http.post<Video>(`${this.baseUrl}/video-management/videos`, payload);
-  }
-
-  generateVideo(id: string) {
-    return this.http.post<GenerateResult>(
-      `${this.baseUrl}/video-management/videos/${id}/generate`,
-      {},
-    );
+  createVideo(payload: Partial<ContentItem>) {
+    return this.http.post<ContentItem>(`${this.baseUrl}${environment.apiEndpoints.content.create}`, payload);
   }
 
   deleteVideo(id: string) {
-    return this.http.delete<void>(`${this.baseUrl}/video-management/videos/${id}`);
-  }
-
-  getYouTubeAuthUrl() {
-    return this.http.get<{ url: string }>(`${this.baseUrl}/youtube/auth/url`);
-  }
-
-  getYouTubeChannelInfo() {
-    return this.http.get<YouTubeChannelInfo>(`${this.baseUrl}/youtube/channel-info`);
-  }
-
-  uploadVideoToYouTube(payload: { videoId: string; publishAt?: string }) {
-    return this.http.post<UploadResult>(`${this.baseUrl}/youtube/upload`, payload);
+    return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.content.remove(id)}`);
   }
 }

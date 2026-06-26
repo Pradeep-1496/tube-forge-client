@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../../services/theme.service';
 
@@ -43,6 +43,10 @@ import { ThemeService } from '../../../services/theme.service';
         <button class="theme-toggle" (click)="theme.toggle()" [attr.aria-pressed]="theme.dark()">
           <span class="icon">{{ theme.dark() ? '☀' : '☾' }}</span>
           <span>{{ theme.dark() ? 'Light mode' : 'Dark mode' }}</span>
+        </button>
+        <button class="auth-toggle" (click)="logout()">
+          <span class="icon">⎋</span>
+          <span>Logout</span>
         </button>
         <div class="build">v0.1.0 · Angular 21</div>
       </div>
@@ -104,12 +108,25 @@ import { ThemeService } from '../../../services/theme.service';
     }
     .theme-toggle:hover { background: var(--border-subtle); color: var(--text); }
     .theme-toggle .icon { font-family: system-ui; font-size: 1rem; }
+    .auth-toggle {
+      display: flex; align-items: center; gap: 0.6rem;
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      padding: 0.45rem 0.7rem; border-radius: 0.55rem; font-size: 0.8rem; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .auth-toggle:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .auth-toggle .icon { font-family: system-ui; font-size: 1rem; }
     .build { font-size: 0.7rem; color: var(--muted); font-family: monospace; }
   `]
 })
 export class SidebarComponent {
   theme: ThemeService;
-  constructor(theme: ThemeService) {
+  constructor(theme: ThemeService, private readonly router: Router) {
     this.theme = theme;
+  }
+
+  logout() {
+    localStorage.removeItem('auth_token');
+    this.router.navigate(['/login']);
   }
 }

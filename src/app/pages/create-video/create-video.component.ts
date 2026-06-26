@@ -33,8 +33,13 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
             </div>
             <div class="field">
               <label for="content">Content / Dialogue</label>
-              <textarea id="content" rows="6" formControlName="content" required
-                placeholder="Speaker: Line..."></textarea>
+              <textarea
+                id="content"
+                rows="6"
+                formControlName="content"
+                required
+                placeholder="Speaker: Line..."
+              ></textarea>
             </div>
             <div class="row">
               <div class="field">
@@ -67,12 +72,21 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
             </div>
             <div class="field">
               <label for="tags">Tags (comma separated)</label>
-              <input id="tags" type="text" formControlName="tags" placeholder="shorts, viral, convoloop" />
+              <input
+                id="tags"
+                type="text"
+                formControlName="tags"
+                placeholder="shorts, viral, convoloop"
+              />
             </div>
             <div class="field">
               <label for="thumbnail">Thumbnail HTML</label>
-              <textarea id="thumbnail" rows="5" formControlName="thumbnail"
-                placeholder="<div style='...'>...</div>"></textarea>
+              <textarea
+                id="thumbnail"
+                rows="5"
+                formControlName="thumbnail"
+                placeholder="<div style='...'>...</div>"
+              ></textarea>
               <small>Inline CSS only. Use the preview to check rendering.</small>
             </div>
           </fieldset>
@@ -104,65 +118,193 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
       </div>
     </div>
   `,
-  styles: [`
-    .create { display: flex; flex-direction: column; gap: 1.6rem; }
-    .page-header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text); margin: 0; }
-    .page-header p { color: var(--muted); margin: 0.25rem 0 0; font-size: 0.92rem; }
-    .split { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
-    @media (max-width: 960px) { .split { grid-template-columns: 1fr; } .preview { order: -1; } }
-    .form fieldset {
-      background: var(--border-subtle);
-      border: 1px solid var(--border);
-      border-radius: 0.9rem;
-      padding: 1.4rem;
-      display: flex; flex-direction: column; gap: 1rem;
-    }
-    legend { color: var(--text); font-weight: 600; font-size: 0.9rem; }
-    .field { display: flex; flex-direction: column; gap: 0.35rem; }
-    label { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
-    input, select, textarea {
-      background: var(--border-subtle);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.6rem 0.85rem;
-      border-radius: 0.55rem;
-      font-size: 0.9rem;
-      width: 100%;
-      font-family: inherit;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak);
-    }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    small { font-size: 0.75rem; color: var(--muted); text-align: right; }
-    .actions { display: flex; justify-content: flex-end; margin-top: 0.5rem; }
-    .btn {
-      padding: 0.55rem 1.2rem; border-radius: 0.55rem; font-weight: 600; font-size: 0.88rem;
-      border: 1px solid transparent; cursor: pointer; display: inline-flex; gap: 0.4rem; align-items: center;
-      transition: all 0.15s ease;
-    }
-    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .btn.primary:hover:not(:disabled) { filter: brightness(1.1); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .preview h3 { margin: 0 0 0.8rem; color: var(--text); font-size: 0.9rem; }
-    .device { background: var(--bg); border-radius: 1.2rem; border: 1px solid var(--border); overflow: hidden; }
-    .screen {
-      aspect-ratio: 9 / 16;
-      position: relative;
-      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      padding: 1.5rem; text-align: center;
-    }
-    .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); }
-    .content { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
-    .preview-title { color: #fff; font-weight: 700; font-size: 1.2rem; text-align: center; word-break: break-word; }
-    .preview-thumb { width: 100%; text-align: center; }
-    .preview-thumb :deep(*) { max-width: 100%; }
-    .preview-lines { display: flex; flex-direction: column; gap: 0.7rem; }
-    .preview-line { display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: center; align-items: baseline; }
-    .speaker { color: #facc15; font-weight: 700; font-size: 0.95rem; }
-    .text { color: #fff; font-size: 0.9rem; word-break: break-word; }
-  `]
+  styles: [
+    `
+      .create {
+        display: flex;
+        flex-direction: column;
+        gap: 1.6rem;
+      }
+      .page-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0;
+      }
+      .page-header p {
+        color: var(--muted);
+        margin: 0.25rem 0 0;
+        font-size: 0.92rem;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 1.5rem;
+        align-items: start;
+      }
+      @media (max-width: 960px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+        .preview {
+          order: -1;
+        }
+      }
+      .form fieldset {
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        border-radius: 0.9rem;
+        padding: 1.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      legend {
+        color: var(--text);
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      label {
+        font-size: 0.82rem;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      input,
+      select,
+      textarea {
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 0.6rem 0.85rem;
+        border-radius: 0.55rem;
+        font-size: 0.9rem;
+        width: 100%;
+        font-family: inherit;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-weak);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      small {
+        font-size: 0.75rem;
+        color: var(--muted);
+        text-align: right;
+      }
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+      }
+      .btn {
+        padding: 0.55rem 1.2rem;
+        border-radius: 0.55rem;
+        font-weight: 600;
+        font-size: 0.88rem;
+        border: 1px solid transparent;
+        cursor: pointer;
+        display: inline-flex;
+        gap: 0.4rem;
+        align-items: center;
+        transition: all 0.15s ease;
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover:not(:disabled) {
+        filter: brightness(1.1);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .preview h3 {
+        margin: 0 0 0.8rem;
+        color: var(--text);
+        font-size: 0.9rem;
+      }
+      .device {
+        background: var(--bg);
+        border-radius: 1.2rem;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .screen {
+        aspect-ratio: 9 / 16;
+        position: relative;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+      }
+      .content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        width: 100%;
+      }
+      .preview-title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.2rem;
+        text-align: center;
+        word-break: break-word;
+      }
+      .preview-thumb {
+        width: 100%;
+        text-align: center;
+      }
+      .preview-thumb :deep(*) {
+        max-width: 100%;
+      }
+      .preview-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+      }
+      .preview-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        justify-content: center;
+        align-items: baseline;
+      }
+      .speaker {
+        color: #facc15;
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .text {
+        color: #fff;
+        font-size: 0.9rem;
+        word-break: break-word;
+      }
+    `,
+  ],
 })
 export class CreateVideoComponent implements OnInit {
   channels = signal<Channel[]>([]);
@@ -173,7 +315,11 @@ export class CreateVideoComponent implements OnInit {
   private readonly api: ApiService;
   private readonly fb: FormBuilder;
 
-  constructor(api: ApiService, fb: FormBuilder, private readonly sanitizer: DomSanitizer) {
+  constructor(
+    api: ApiService,
+    fb: FormBuilder,
+    private readonly sanitizer: DomSanitizer,
+  ) {
     this.api = api;
     this.fb = fb;
     this.form = this.fb.group({
@@ -186,7 +332,7 @@ export class CreateVideoComponent implements OnInit {
       backgroundAssetId: [null as string | null],
       publishAt: [''],
       tags: [''],
-      thumbnail: ['']
+      thumbnail: [''],
     });
   }
 
@@ -202,11 +348,20 @@ export class CreateVideoComponent implements OnInit {
     const raw = this.form.getRawValue();
     const payload = {
       ...raw,
-      tags: ((raw.tags as string || '').split(',').map((t) => t.trim()).filter(Boolean)) as string[]
+      tags: ((raw.tags as string) || '')
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean) as string[],
     };
     this.api.createVideo(payload as any).subscribe({
-      next: () => { this.submitting.set(false); alert('Draft created! Go to Videos to generate.'); },
-      error: (err) => { this.submitting.set(false); alert(err?.error ?? 'Failed'); }
+      next: () => {
+        this.submitting.set(false);
+        alert('Draft created! Go to Videos to generate.');
+      },
+      error: (err) => {
+        this.submitting.set(false);
+        alert(err?.error ?? 'Failed');
+      },
     });
   }
 
@@ -214,15 +369,20 @@ export class CreateVideoComponent implements OnInit {
     const id = this.form.controls['backgroundAssetId'].value;
     const asset = this.backgrounds().find((a) => a.id === id);
     if (!asset || !asset.filePath) return {};
-    return { background: `url(http://localhost:4000/api${asset.filePath}) no-repeat center / cover` };
+    return {
+      background: `url(http://localhost:3000/api${asset.filePath}) no-repeat center / cover`,
+    };
   }
 
   previewLines() {
     const content = (this.form.controls['content'].value as string) || '';
-    return content.split('\n').filter((l) => l.trim() && l.includes(':')).map((l) => {
-      const [speaker, ...rest] = l.split(':');
-      return { speaker: speaker.trim(), text: rest.join(':').trim() };
-    });
+    return content
+      .split('\n')
+      .filter((l) => l.trim() && l.includes(':'))
+      .map((l) => {
+        const [speaker, ...rest] = l.split(':');
+        return { speaker: speaker.trim(), text: rest.join(':').trim() };
+      });
   }
 
   thumbnailHtml() {
