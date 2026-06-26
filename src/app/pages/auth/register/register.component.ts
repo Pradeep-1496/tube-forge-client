@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService, AuthResponse, RegisterRequest } from '../../../services/api.service';
+import { ApiService, RegisterRequest, RegisterResponse } from '../../../services/api.service';
 
 @Component({
   selector: 'app-register',
@@ -192,9 +192,8 @@ export class RegisterComponent {
     const payload: RegisterRequest = { email, password };
     if (name) payload.name = name;
     this.api.register(payload).subscribe({
-      next: (res: AuthResponse) => {
-        localStorage.setItem('auth_token', res.token);
-        this.router.navigate(['/dashboard']);
+      next: (res: RegisterResponse) => {
+        this.router.navigate(['/login']);
       },
       error: (err: { error?: { message?: string } }) => {
         this.error.set(err?.error?.message ?? 'Registration failed. Please try again.');

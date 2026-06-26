@@ -248,11 +248,11 @@ export class ApiService {
   constructor(private readonly http: HttpClient) {}
 
   login(payload: LoginRequest) {
-    return this.http.post<AuthResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.login}`, payload);
+    return this.http.post<LoginResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.login}`, payload);
   }
 
   register(payload: RegisterRequest) {
-    return this.http.post<AuthResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.register}`, payload);
+    return this.http.post<RegisterResponse>(`${this.baseUrl}${environment.apiEndpoints.auth.register}`, payload);
   }
 
   private createStatsCache() {

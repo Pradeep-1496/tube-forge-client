@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../../services/theme.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -44,7 +45,7 @@ import { ThemeService } from '../../../services/theme.service';
           <span class="icon">{{ theme.dark() ? '☀' : '☾' }}</span>
           <span>{{ theme.dark() ? 'Light mode' : 'Dark mode' }}</span>
         </button>
-        <button class="auth-toggle" (click)="logout()">
+        <button class="auth-toggle" (click)="auth.logout()">
           <span class="icon">⎋</span>
           <span>Logout</span>
         </button>
@@ -121,12 +122,9 @@ import { ThemeService } from '../../../services/theme.service';
 })
 export class SidebarComponent {
   theme: ThemeService;
-  constructor(theme: ThemeService, private readonly router: Router) {
+  auth: AuthService;
+  constructor(theme: ThemeService, private readonly router: Router, auth: AuthService) {
     this.theme = theme;
-  }
-
-  logout() {
-    localStorage.removeItem('auth_token');
-    this.router.navigate(['/login']);
+    this.auth = auth;
   }
 }
