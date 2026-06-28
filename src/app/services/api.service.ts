@@ -586,6 +586,10 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.content.remove(id)}`);
   }
 
+  getRunning() {
+    return this.http.get<boolean>(`${this.baseUrl}/api/running`);
+  }
+
   getMetadata() {
     return this.http.get<MetadataItem[]>(
       `${this.baseUrl}${environment.apiEndpoints.metadata.findAll}`,

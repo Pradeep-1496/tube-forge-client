@@ -190,9 +190,9 @@ export class SettingsComponent implements OnInit {
   }
 
   checkHealth() {
-    this.api.getStats().subscribe({
-      next: () => this.healthOk.set(true),
-      complete: () => this.healthOk.set(false),
+    this.api.getRunning().subscribe({
+      next: (ok) => this.healthOk.set(ok),
+      error: () => this.healthOk.set(false),
     });
     this.api.getYouTubeChannelInfo().subscribe({
       next: (c) => {

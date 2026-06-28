@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout/layout.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { VideosComponent } from './pages/videos/videos.component';
 import { CreateVideoComponent } from './pages/create-video/create-video.component';
 import { ChannelsComponent } from './pages/channels/channels.component';
 import { SettingsComponent } from './pages/settings/settings.component';
@@ -27,7 +26,6 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
-      { path: 'videos', component: VideosComponent },
       { path: 'video-metadata', component: VideoMetadataComponent },
       { path: 'create', component: CreateVideoComponent },
       { path: 'content', component: ContentComponent },
