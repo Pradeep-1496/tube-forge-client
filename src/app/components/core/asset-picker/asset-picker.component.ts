@@ -150,7 +150,7 @@ export class AssetPickerComponent implements OnInit {
         this.title.set('Channel');
         this.showSearch.set(true);
         this.api.getChannels().subscribe({
-          next: (items: Channel[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.channelId })))
+          next: (items: Channel[]) => this.options.set(items.map(i => ({ id: i.channelId, name: i.name, subtitle: i.channelId })))
         });
         break;
       case 'themes':

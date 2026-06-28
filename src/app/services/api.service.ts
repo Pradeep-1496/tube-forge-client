@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { catchError, map, of, shareReplay } from 'rxjs';
+import { catchError, map, of, shareReplay, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type Visibility = 'public' | 'private';
@@ -419,15 +419,22 @@ export class ApiService {
     payload: {
       audioId?: string;
       theme?: string;
-      channelId?: string;
+      youtube_channel_id?: string;
       publishedDate?: string;
       subscribeImageId?: string;
     } = {},
   ) {
-    return this.http.post<GenerateFromVideoResponse>(
-      `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromVideo(videoContentId, backgroundVideoId)}`,
-      payload,
-    );
+    if (!backgroundVideoId) {
+      console.error('[ApiService] generateFromVideo called with missing backgroundVideoId', {
+        videoContentId,
+        backgroundVideoId,
+        payload,
+      });
+      return throwError(() => new Error('Background video ID is required'));
+    }
+    const url = `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromVideo(videoContentId, backgroundVideoId)}`;
+    console.debug('[ApiService] generateFromVideo', { url, payload });
+    return this.http.post<GenerateFromVideoResponse>(url, payload);
   }
 
   getThemes() {

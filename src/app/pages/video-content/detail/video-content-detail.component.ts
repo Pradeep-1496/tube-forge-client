@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService, VideoContent } from '../../../services/api.service';
+import { ApiService, VideoContent, GenerateFromVideoResponse } from '../../../services/api.service';
 import { ContentEditorComponent } from '../../../components/core/content-editor/content-editor.component';
 import { GenerationWizardComponent } from '../../../components/core/generation-wizard/generation-wizard.component';
 import { GenerationProgressComponent } from '../../../components/core/generation-progress/generation-progress.component';
@@ -143,32 +143,74 @@ export class VideoContentDetailComponent implements OnInit {
     });
   }
 
-  onGenerate(req: any) {
+  onGenerate(req: {
+    videoContentId: string;
+    backgroundId?: string;
+    backgroundVideoId?: string;
+    audioId?: string;
+    theme?: string;
+    subscribeImageId?: string;
+    channelId: string;
+    publishedDate: string;
+  }) {
     this.view.set('generating');
     this.genProgress.set(0);
     this.genStatus.set('Starting generation...');
     this.genError.set(null);
     this.genDone.set(false);
 
-    this.api.generateVideo(this.contentId).subscribe({
-      next: (res: any) => {
-        this.genProgress.set(100);
-        this.genStatus.set('Generation complete!');
-        this.genDone.set(true);
-        if (res.videoPath) {
-          this.videoUrl.set(res.videoPath);
+    const handleError = (err: any) => {
+      const body = err.error;
+      let msg = 'Generation failed';
+      if (typeof body === 'string') msg = body;
+      else if (body?.message) msg = body.message;
+      else if (body?.error) msg = typeof body.error === 'string' ? body.error : body.message || msg;
+      else if (err.message) msg = err.message;
+      if (err.status) msg = `[${err.status}] ${msg}`;
+      this.genError.set(msg);
+      this.genStatus.set('Failed');
+    };
+
+    if (req.backgroundVideoId) {
+      this.api.generateFromVideo(req.videoContentId, req.backgroundVideoId, {
+        audioId: req.audioId || undefined,
+        theme: req.theme || undefined,
+        youtube_channel_id: req.channelId || undefined,
+        publishedDate: req.publishedDate || undefined,
+        subscribeImageId: req.subscribeImageId || undefined,
+      }).subscribe({
+        next: (res: GenerateFromVideoResponse) => {
+          this.genProgress.set(100);
+          this.genStatus.set('Generation complete!');
+          this.genDone.set(true);
+          this.videoUrl.set(res.outputPath);
           this.videoMetadata.set({
-            title: this.content()?.title || '',
-            createdAt: new Date().toISOString(),
+            title: res.metadata.title,
+            createdAt: res.metadata.createdAt,
+            status: res.metadata.status,
           });
-        }
-        setTimeout(() => this.view.set('result'), 1000);
-      },
-      error: (err) => {
-        this.genError.set(err?.error?.message || 'Generation failed');
-        this.genStatus.set('Failed');
-      },
-    });
+          setTimeout(() => this.view.set('result'), 800);
+        },
+        error: handleError,
+      });
+    } else {
+      this.api.generateVideo(this.contentId).subscribe({
+        next: (res) => {
+          this.genProgress.set(100);
+          this.genStatus.set('Generation complete!');
+          this.genDone.set(true);
+          if (res.videoPath) {
+            this.videoUrl.set(res.videoPath);
+            this.videoMetadata.set({
+              title: this.content()?.title || '',
+              createdAt: new Date().toISOString(),
+            });
+          }
+          setTimeout(() => this.view.set('result'), 800);
+        },
+        error: handleError,
+      });
+    }
   }
 
   retryGenerate() {

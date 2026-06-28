@@ -51,10 +51,6 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">◎</span>
           <span>Channels</span>
         </a>
-        <a routerLink="/assets" routerLinkActive="active" class="nav-item">
-          <span class="icon">▦</span>
-          <span>Legacy Assets</span>
-        </a>
         <a routerLink="/settings" routerLinkActive="active" class="nav-item">
           <span class="icon">⚙</span>
           <span>Settings</span>
