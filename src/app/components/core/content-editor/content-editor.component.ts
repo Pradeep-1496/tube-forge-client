@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { VideoContent } from '../../../services/api.service';
+import { VideoContent, Visibility } from '../../../services/api.service';
 
 @Component({
   selector: 'app-content-editor',

@@ -10,6 +10,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server
   },
   {
+    path: 'generate-from-video',
+    renderMode: RenderMode.Server
+  },
+  {
     path: '**',
     renderMode: RenderMode.Prerender
   }

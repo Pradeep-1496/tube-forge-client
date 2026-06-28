@@ -1,11 +1,13 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, AudioAsset } from '../../services/api.service';
+import { AudioService } from '../../services/asset.service';
+import { MediaAssetComponent } from '../../components/shared/media-asset/media-asset.component';
+import { AssetUploadFormComponent } from '../../components/shared/asset-upload-form/asset-upload-form.component';
 
 @Component({
   selector: 'app-audios',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MediaAssetComponent, AssetUploadFormComponent],
   template: `
     <div class="page">
       <header class="page-header">
@@ -13,34 +15,50 @@ import { ApiService, AudioAsset } from '../../services/api.service';
         <p>Manage audio tracks used in video generation.</p>
       </header>
 
-      <section class="list">
-        <div class="uploader">
-          <input type="file" accept="audio/*" #fileInput />
-          <button class="btn primary" (click)="upload(fileInput)" [disabled]="uploading()">
-            {{ uploading() ? 'Uploading…' : 'Upload Audio' }}
-          </button>
-        </div>
+      <app-asset-upload-form
+        accept="audio/*"
+        [showTypeField]="false"
+        [uploadFn]="audioService.upload.bind(audioService)"
+        (uploaded)="audioService.load()"
+      />
 
-        <div class="grid">
-          @for (audio of audios(); track audio.id) {
-            <article class="audio-card">
-              <div class="icon">🎵</div>
-              <div class="info">
-                <div class="name">{{ audio.name }}</div>
-                <small>{{ audio.category }} · {{ audio.mimeType }}</small>
-                @if (audio.sizeBytes) {
-                  <small class="size">{{ (audio.sizeBytes / 1024).toFixed(1) }} KB</small>
-                }
+      <section class="list">
+        @if (audioService.loading$()) {
+          <div class="loading-grid">
+            @for (_ of [1,2,3]; track _) {
+              <div class="audio-card">
+                <div class="skeleton-pulse"></div>
               </div>
-              <div class="actions">
-                <button class="btn sm danger ghost" (click)="remove(audio)">Delete</button>
-              </div>
-            </article>
-          }
-          @if (!audios().length) {
-            <div class="notice">No audio files yet.</div>
-          }
-        </div>
+            }
+          </div>
+        } @else {
+          <div class="grid">
+            @for (audio of audioService.items$(); track audio.audio_id) {
+              <article class="audio-card">
+                <div class="player-wrap">
+                  <app-media-asset
+                    type="audio"
+                    [src]="audioService.getSrc(audio)"
+                    [label]="audio.name"
+                  />
+                </div>
+                <div class="info">
+                  <div class="name">{{ audio.name }}</div>
+                  <small>{{ audio.length }}s{{ audio.visibility ? ' · ' + audio.visibility : '' }}</small>
+                  @if (audio.size) {
+                    <small class="size">{{ (audio.size / 1024).toFixed(1) }} KB</small>
+                  }
+                </div>
+                <div class="actions">
+                  <button class="btn sm danger ghost" (click)="remove(audio)">Delete</button>
+                </div>
+              </article>
+            }
+            @if (!audioService.items$().length) {
+              <div class="notice">No audio files yet.</div>
+            }
+          </div>
+        }
       </section>
     </div>
   `,
@@ -50,17 +68,9 @@ import { ApiService, AudioAsset } from '../../services/api.service';
     .page-header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text); margin: 0; }
     .page-header p { color: var(--muted); margin: 0.25rem 0 0; font-size: 0.92rem; }
     .list { display: flex; flex-direction: column; gap: 1rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-    .audio-card { background: var(--border-subtle); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1rem; display: flex; align-items: center; gap: 0.75rem; }
-    .icon { font-size: 1.5rem; flex-shrink: 0; }
-    .info { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; }
-    .name { color: var(--text); font-weight: 600; font-size: 0.88rem; }
-    small { color: var(--muted); font-size: 0.75rem; }
-    .size { font-family: monospace; }
-    .actions { flex-shrink: 0; }
-    .uploader { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
-    .uploader input[type="file"] { color: var(--muted); font-size: 0.85rem; }
     .notice { color: var(--muted); font-style: italic; padding: 1rem; text-align: center; grid-column: 1 / -1; }
+    .skeleton-pulse { width: 100%; height: 60px; background: var(--border); border-radius: 0.5rem; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
     .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
     .btn.primary { background: var(--accent); color: #fff; }
     .btn.primary:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -69,31 +79,16 @@ import { ApiService, AudioAsset } from '../../services/api.service';
   `]
 })
 export class AudiosComponent implements OnInit {
-  audios = signal<AudioAsset[]>([]);
-  uploading = signal(false);
+  uploading = false;
 
-  constructor(private readonly api: ApiService) {}
+  constructor(readonly audioService: AudioService) {}
 
   ngOnInit() {
-    this.loadAudios();
+    this.audioService.load();
   }
 
-  private loadAudios() {
-    this.api.getAudios().subscribe({ next: (items) => this.audios.set(items) });
-  }
-
-  upload(input: HTMLInputElement) {
-    const file = input.files?.[0];
-    if (!file) return;
-    this.uploading.set(true);
-    this.api.uploadAudio(file).subscribe({
-      next: () => { this.uploading.set(false); this.loadAudios(); input.value = ''; },
-      error: () => { this.uploading.set(false); alert('Upload failed.'); },
-    });
-  }
-
-  remove(audio: AudioAsset) {
+  remove(audio: any) {
     if (!confirm(`Delete "${audio.name}"?`)) return;
-    this.api.deleteAudio(audio.id).subscribe({ next: () => this.loadAudios() });
+    this.audioService.remove(audio.audio_id);
   }
 }

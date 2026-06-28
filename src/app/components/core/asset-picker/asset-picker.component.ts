@@ -122,28 +122,28 @@ export class AssetPickerComponent implements OnInit {
         this.title.set('Background');
         this.showSearch.set(true);
         this.api.getBackgrounds().subscribe({
-          next: (items: BackgroundAsset[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.category, preview: i.filePath })))
+          next: (items: BackgroundAsset[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type, preview: i.path })))
         });
         break;
       case 'background-videos':
         this.title.set('Background Video');
         this.showSearch.set(true);
         this.api.getBackgroundVideos().subscribe({
-          next: (items: BackgroundVideo[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.category, preview: i.filePath })))
+          next: (items: BackgroundVideo[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type })))
         });
         break;
       case 'audios':
         this.title.set('Audio');
         this.showSearch.set(true);
         this.api.getAudios().subscribe({
-          next: (items: AudioAsset[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.category })))
+          next: (items: AudioAsset[]) => this.options.set(items.map(i => ({ id: i.audio_id, name: i.name, subtitle: i.length ? `${i.length}s` : undefined })))
         });
         break;
       case 'subscribe-images':
         this.title.set('Subscribe Image');
         this.showSearch.set(true);
         this.api.getSubscribeImages().subscribe({
-          next: (items: SubscribeImage[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.category, preview: i.filePath })))
+          next: (items: SubscribeImage[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type, preview: i.path })))
         });
         break;
       case 'channels':

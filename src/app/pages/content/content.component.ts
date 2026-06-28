@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ApiService, ContentItem } from '../../services/api.service';
+import { ApiService, ContentItem, Visibility } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -55,14 +55,18 @@ import { AuthService } from '../../services/auth.service';
             <textarea rows="4" formControlName="content" placeholder="Enter content"></textarea>
           </div>
           <div class="row">
-            <div class="field">
-              <label>Type</label>
-              <input formControlName="type" placeholder="e.g. video" />
-            </div>
-            <div class="field">
-              <label>Visibility</label>
-              <input formControlName="visibility" placeholder="e.g. private" />
-            </div>
+          <div class="field">
+            <label>Type</label>
+            <input formControlName="type" placeholder="e.g. video" />
+          </div>
+          <div class="field visibility-field">
+            <label>Visibility</label>
+            <label class="toggle-label">
+              <input type="checkbox" [checked]="form.controls['visibility'].value === 'public'" (change)="toggleVisibility()" />
+              <span class="toggle-text">{{ form.controls['visibility'].value === 'public' ? 'Public' : 'Private' }}</span>
+            </label>
+            <span class="visibility-hint">{{ form.controls['visibility'].value === 'public' ? 'Visible to all users' : 'Only visible to you' }}</span>
+          </div>
           </div>
           <div class="actions">
             <button type="button" class="btn ghost" (click)="editing.set(null)">Cancel</button>
@@ -209,6 +213,32 @@ import { AuthService } from '../../services/auth.service';
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
       }
+      .visibility-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: 0.88rem;
+        color: var(--text);
+        font-weight: 500;
+      }
+      .toggle-label input[type="checkbox"] {
+        width: auto;
+        accent-color: var(--accent);
+      }
+      .toggle-text {
+        font-weight: 600;
+      }
+      .visibility-hint {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-top: 0.1rem;
+      }
       .actions {
         display: flex;
         justify-content: flex-end;
@@ -260,7 +290,7 @@ export class ContentComponent implements OnInit {
       title: ['', Validators.required],
       content: ['', Validators.required],
       type: [''],
-      visibility: [''],
+      visibility: ['private'],
     });
   }
 
@@ -283,8 +313,8 @@ export class ContentComponent implements OnInit {
   }
 
   startCreate() {
-    this.form.reset({ title: '', content: '', type: '', visibility: '' });
-    this.editing.set({ id: '', title: '', content: '', type: '', visibility: '', userId: '' } as any);
+    this.form.reset({ title: '', content: '', type: '', visibility: 'private' });
+    this.editing.set({ id: '', title: '', content: '', type: '', visibility: 'private', userId: '' } as any);
   }
 
   startEdit(item: ContentItem) {
@@ -318,6 +348,11 @@ export class ContentComponent implements OnInit {
         error: (err) => console.error('[ContentComponent] createContentItem error', err),
       });
     }
+  }
+
+  toggleVisibility() {
+    const current = this.form.controls['visibility'].value;
+    this.form.controls['visibility'].setValue(current === 'public' ? 'private' : 'public');
   }
 
   remove(item: ContentItem) {

@@ -9,12 +9,12 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { LoginComponent } from './pages/auth/login/login.component';
 import { RegisterComponent } from './pages/auth/register/register.component';
 import { ContentComponent } from './pages/content/content.component';
-import { VideoContentNewComponent } from './pages/video-content/new/video-content-new.component';
 import { VideoContentDetailComponent } from './pages/video-content/detail/video-content-detail.component';
 import { BackgroundsComponent } from './pages/backgrounds/backgrounds.component';
 import { AudiosComponent } from './pages/audios/audios.component';
 import { SubscribeImagesComponent } from './pages/subscribe-images/subscribe-images.component';
 import { GenerationDetailComponent } from './pages/generation/detail/generation-detail.component';
+import { GenerateFromVideoComponent } from './pages/generate-from-video/generate-from-video.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -30,7 +30,6 @@ export const routes: Routes = [
       { path: 'videos', component: VideosComponent },
       { path: 'create', component: CreateVideoComponent },
       { path: 'content', component: ContentComponent },
-      { path: 'video-content/new', component: VideoContentNewComponent },
       { path: 'video-content/:id', component: VideoContentDetailComponent },
       { path: 'backgrounds', component: BackgroundsComponent },
       { path: 'audios', component: AudiosComponent },
@@ -38,6 +37,7 @@ export const routes: Routes = [
       { path: 'channels', component: ChannelsComponent },
       { path: 'assets', component: AssetsComponent },
       { path: 'settings', component: SettingsComponent },
+      { path: 'generate-from-video', component: GenerateFromVideoComponent },
       { path: 'generation/:id', component: GenerationDetailComponent },
       { path: '**', redirectTo: 'dashboard' }
     ]

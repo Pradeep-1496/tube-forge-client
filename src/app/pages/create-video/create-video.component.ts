@@ -368,9 +368,9 @@ export class CreateVideoComponent implements OnInit {
   previewBackground() {
     const id = this.form.controls['backgroundAssetId'].value;
     const asset = this.backgrounds().find((a) => a.id === id);
-    if (!asset || !asset.filePath) return {};
+    if (!asset || !asset.path) return {};
     return {
-      background: `url(http://localhost:3000/api${asset.filePath}) no-repeat center / cover`,
+      background: `url(http://localhost:3000/${asset.path.replace(/\\/g, '/')}) no-repeat center / cover`,
     };
   }
 

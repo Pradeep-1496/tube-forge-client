@@ -1,11 +1,13 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ApiService, SubscribeImage } from '../../services/api.service';
+import { SubscribeImageService } from '../../services/asset.service';
+import { MediaAssetComponent } from '../../components/shared/media-asset/media-asset.component';
+import { AssetUploadFormComponent } from '../../components/shared/asset-upload-form/asset-upload-form.component';
 
 @Component({
   selector: 'app-subscribe-images',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MediaAssetComponent, AssetUploadFormComponent],
   template: `
     <div class="page">
       <header class="page-header">
@@ -13,35 +15,49 @@ import { ApiService, SubscribeImage } from '../../services/api.service';
         <p>Manage subscribe overlay images for videos.</p>
       </header>
 
-      <section class="list">
-        <div class="uploader">
-          <input type="file" accept="image/*" #fileInput />
-          <button class="btn primary" (click)="upload(fileInput)" [disabled]="uploading()">
-            {{ uploading() ? 'Uploading…' : 'Upload Image' }}
-          </button>
-        </div>
+      <app-asset-upload-form
+        accept="image/*"
+        [showTypeField]="true"
+        [uploadFn]="subService.upload.bind(subService)"
+        (uploaded)="subService.load()"
+      />
 
-        <div class="grid">
-          @for (img of images(); track img.id) {
-            <article class="card" [class.inactive]="!img.isActive">
-              <div class="thumb"><img [src]="img.filePath" [alt]="img.name" /></div>
-              <div class="info">
-                <div class="name">{{ img.name }}</div>
-                <small>{{ img.category }} · {{ img.mimeType }}</small>
-              </div>
-              <div class="actions">
-                <label class="toggle">
-                  <input type="checkbox" [checked]="img.isActive" (change)="toggle(img)" />
-                  <span>Active</span>
-                </label>
-                <button class="btn sm danger ghost" (click)="remove(img)">Delete</button>
-              </div>
-            </article>
-          }
-          @if (!images().length) {
-            <div class="notice">No subscribe images yet.</div>
-          }
-        </div>
+      <section class="list">
+        @if (subService.loading$()) {
+          <div class="loading-grid">
+            @for (_ of [1,2,3]; track _) {
+              <div class="card"><div class="skeleton-pulse"></div></div>
+            }
+          </div>
+        } @else {
+          <div class="grid">
+            @for (img of subService.items$(); track img.id) {
+              <article class="card" [class.inactive]="img.visibility !== 'public'">
+                <div class="thumb" [class.portrait]="isPortrait(img)" [class.landscape]="!isPortrait(img)">
+                  <app-media-asset
+                    type="image"
+                    [src]="subService.getSrc(img)"
+                    [alt]="img.name"
+                  />
+                </div>
+                <div class="info">
+                  <div class="name">{{ img.name }}</div>
+              <small>{{ img.type }} · {{ img.size ? (img.size / 1024).toFixed(1) + ' KB' : '' }}</small>
+                </div>
+                <div class="actions">
+                  <label class="toggle">
+                    <input type="checkbox" [checked]="img.visibility === 'public'" (change)="toggle(img)" />
+                    <span>Active</span>
+                  </label>
+                  <button class="btn sm danger ghost" (click)="remove(img)">Delete</button>
+                </div>
+              </article>
+            }
+            @if (!subService.items$().length) {
+              <div class="notice">No subscribe images yet.</div>
+            }
+          </div>
+        }
       </section>
     </div>
   `,
@@ -52,19 +68,22 @@ import { ApiService, SubscribeImage } from '../../services/api.service';
     .page-header p { color: var(--muted); margin: 0.25rem 0 0; font-size: 0.92rem; }
     .list { display: flex; flex-direction: column; gap: 1rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    .loading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
     .card { background: var(--border-subtle); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
     .card.inactive { opacity: 0.5; }
     .thumb { aspect-ratio: 16/9; background: var(--bg); border-radius: 0.5rem; overflow: hidden; }
-    .thumb img { width: 100%; height: 100%; object-fit: contain; }
+    .thumb.portrait { aspect-ratio: 9/16; max-height: 320px; }
+    .thumb.portrait :deep(img) { object-fit: contain !important; }
+    .thumb.landscape { aspect-ratio: 16/9; }
     .info { display: flex; flex-direction: column; gap: 0.15rem; }
     .name { color: var(--text); font-weight: 600; font-size: 0.88rem; }
     small { color: var(--muted); font-size: 0.75rem; }
     .actions { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; }
     .toggle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--muted); cursor: pointer; }
     .toggle input { accent-color: var(--accent); }
-    .uploader { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
-    .uploader input[type="file"] { color: var(--muted); font-size: 0.85rem; }
     .notice { color: var(--muted); font-style: italic; padding: 1rem; text-align: center; }
+    .skeleton-pulse { width: 100%; height: 120px; background: var(--border); border-radius: 0.5rem; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
     .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
     .btn.primary { background: var(--accent); color: #fff; }
     .btn.primary:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -73,37 +92,26 @@ import { ApiService, SubscribeImage } from '../../services/api.service';
   `]
 })
 export class SubscribeImagesComponent implements OnInit {
-  images = signal<SubscribeImage[]>([]);
-  uploading = signal(false);
+  uploading = false;
 
-  constructor(private readonly api: ApiService) {}
+  constructor(readonly subService: SubscribeImageService) {}
 
   ngOnInit() {
-    this.loadImages();
+    this.subService.load();
   }
 
-  private loadImages() {
-    this.api.getSubscribeImages().subscribe({ next: (items) => this.images.set(items) });
+  toggle(img: any) {
+    this.subService.toggle(img);
   }
 
-  upload(input: HTMLInputElement) {
-    const file = input.files?.[0];
-    if (!file) return;
-    this.uploading.set(true);
-    this.api.uploadSubscribeImage(file).subscribe({
-      next: () => { this.uploading.set(false); this.loadImages(); input.value = ''; },
-      error: () => { this.uploading.set(false); alert('Upload failed.'); },
-    });
-  }
-
-  toggle(img: SubscribeImage) {
-    this.api.updateSubscribeImage(img.id, { isActive: !img.isActive } as any).subscribe({
-      next: () => this.loadImages(),
-    });
-  }
-
-  remove(img: SubscribeImage) {
+  remove(img: any) {
     if (!confirm(`Delete "${img.name}"?`)) return;
-    this.api.deleteSubscribeImage(img.id).subscribe({ next: () => this.loadImages() });
+    this.subService.remove(img.id);
+  }
+
+  isPortrait(img: any): boolean {
+    const path = (img.path || '').toLowerCase();
+    const type = (img.type || '').toLowerCase();
+    return path.includes('portrait') || type.includes('portrait');
   }
 }

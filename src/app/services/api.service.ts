@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, of, shareReplay } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export type Visibility = 'public' | 'private';
+
 export interface YouTubeChannel {
   id: string;
   name: string;
@@ -71,12 +73,13 @@ export interface TextEffect {
 export interface BackgroundAsset {
   id: string;
   name: string;
-  category: string;
-  filePath: string;
-  mimeType: string;
-  sizeBytes?: number;
-  isActive: boolean;
+  path: string;
+  size: number;
+  type: string;
+  userId: string;
+  visibility: Visibility;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Template {
@@ -89,32 +92,34 @@ export interface Template {
 }
 
 export interface AudioAsset {
-  id: string;
+  audio_id: string;
   name: string;
-  category: string;
-  filePath: string;
-  mimeType: string;
-  sizeBytes?: number;
-  isActive: boolean;
+  path: string;
+  length: number;
+  size: number;
+  userId: string;
+  visibility: Visibility;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BackgroundVideo {
   id: string;
   name: string;
-  category: string;
-  filePath: string;
-  mimeType: string;
-  sizeBytes?: number;
-  isActive: boolean;
+  path: string;
+  size: number;
+  type: string;
+  userId: string;
+  visibility: Visibility;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface VideoContent {
   id: string;
   title: string;
   content: string;
-  visibility: 'public' | 'private';
+  visibility: Visibility;
   userId: string;
   user?: { name: string };
   createdAt?: string;
@@ -137,7 +142,7 @@ export interface ContentItem {
   title: string;
   content: string;
   type: string;
-  visibility: string;
+  visibility: Visibility;
   userId: string;
   user?: { name: string };
   createdAt?: string;
@@ -152,12 +157,13 @@ export interface MetadataItem {
 export interface SubscribeImage {
   id: string;
   name: string;
-  category: string;
-  filePath: string;
-  mimeType: string;
-  sizeBytes?: number;
-  isActive: boolean;
+  path: string;
+  size: number;
+  type: string;
+  userId: string;
+  visibility: Visibility;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoginRequest {
@@ -212,6 +218,33 @@ export interface UploadResult {
   success: boolean;
   videoId?: string;
   error?: string;
+}
+
+export interface GenerateFromVideoResponse {
+  outputPath: string;
+  metadata: {
+    id: string;
+    status: string;
+    title: string;
+    description: string;
+    tags: string[];
+    file_name: string;
+    output_video_path: string;
+    privacy_status: string;
+    default_language: string;
+    self_declared_made_for_kids: boolean;
+    channelId: string;
+    publish_at: string;
+    category_id: string;
+    contentId: string;
+    thumbnailPath: string;
+    userId: string;
+    visibility: Visibility;
+    updatedAt: string;
+    createdAt: string;
+    youtubeVideoId: string | null;
+    youtubeUrl: string | null;
+  };
 }
 
 export interface GenerateResult {
@@ -380,10 +413,20 @@ export class ApiService {
     );
   }
 
-  generateFromVideo(videoContentId: string, backgroundVideoId: string) {
-    return this.http.post<GenerateResult>(
+  generateFromVideo(
+    videoContentId: string,
+    backgroundVideoId: string,
+    payload: {
+      audioId?: string;
+      theme?: string;
+      channelId?: string;
+      publishedDate?: string;
+      subscribeImageId?: string;
+    } = {},
+  ) {
+    return this.http.post<GenerateFromVideoResponse>(
       `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromVideo(videoContentId, backgroundVideoId)}`,
-      {},
+      payload,
     );
   }
 
@@ -405,9 +448,12 @@ export class ApiService {
     );
   }
 
-  uploadBackground(file: File) {
+  uploadBackground(file: File, fields?: { name?: string; type?: string; visibility?: Visibility }) {
     const form = new FormData();
     form.append('file', file, file.name);
+    if (fields?.name) form.append('name', fields.name);
+    if (fields?.type) form.append('type', fields.type);
+    if (fields?.visibility) form.append('visibility', fields.visibility);
     return this.http.post<BackgroundAsset>(
       `${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`,
       form,
@@ -430,9 +476,11 @@ export class ApiService {
     );
   }
 
-  uploadAudio(file: File) {
+  uploadAudio(file: File, fields?: { name?: string; visibility?: Visibility }) {
     const form = new FormData();
     form.append('file', file, file.name);
+    if (fields?.name) form.append('name', fields.name);
+    if (fields?.visibility) form.append('visibility', fields.visibility);
     return this.http.post<AudioAsset>(
       `${this.baseUrl}${environment.apiEndpoints.audios.upload}`,
       form,
@@ -455,9 +503,12 @@ export class ApiService {
     );
   }
 
-  uploadBackgroundVideo(file: File) {
+  uploadBackgroundVideo(file: File, fields?: { name?: string; type?: string; visibility?: Visibility }) {
     const form = new FormData();
     form.append('file', file, file.name);
+    if (fields?.name) form.append('name', fields.name);
+    if (fields?.type) form.append('type', fields.type);
+    if (fields?.visibility) form.append('visibility', fields.visibility);
     return this.http.post<BackgroundVideo>(
       `${this.baseUrl}${environment.apiEndpoints.backgroundVideos.upload}`,
       form,
@@ -531,9 +582,12 @@ export class ApiService {
     );
   }
 
-  uploadSubscribeImage(file: File) {
+  uploadSubscribeImage(file: File, fields?: { name?: string; type?: string; visibility?: Visibility }) {
     const form = new FormData();
     form.append('file', file, file.name);
+    if (fields?.name) form.append('name', fields.name);
+    if (fields?.type) form.append('type', fields.type);
+    if (fields?.visibility) form.append('visibility', fields.visibility);
     return this.http.post<SubscribeImage>(
       `${this.baseUrl}${environment.apiEndpoints.subscribeImages.upload}`,
       form,
@@ -571,9 +625,12 @@ export class ApiService {
     );
   }
 
-  uploadBackgroundAsset(file: File) {
+  uploadBackgroundAsset(file: File, fields?: { name?: string; type?: string; visibility?: Visibility }) {
     const form = new FormData();
     form.append('file', file, file.name);
+    if (fields?.name) form.append('name', fields.name);
+    if (fields?.type) form.append('type', fields.type);
+    if (fields?.visibility) form.append('visibility', fields.visibility);
     return this.http.post<BackgroundAsset>(
       `${this.baseUrl}${environment.apiEndpoints.backgrounds.upload}`,
       form,

@@ -77,17 +77,17 @@ type Tab = 'text-effects' | 'backgrounds';
           </div>
           <div class="grid">
             @for (bg of backgrounds(); track bg.id) {
-              <article class="bg-card" [class.inactive]="!bg.isActive">
+              <article class="bg-card" [class.inactive]="bg.visibility !== 'public'">
                 <div class="thumb">
-                  <img [src]="bg.filePath" [alt]="bg.name" />
+                  <img [src]="bgUrl(bg)" [alt]="bg.name" />
                 </div>
                 <div class="meta">
                   <div class="name">{{ bg.name }}</div>
-                  <small>{{ bg.category }} · {{ bg.mimeType }}</small>
+                  <small>{{ bg.type }}{{ bg.size ? ' · ' + (bg.size / 1024).toFixed(1) + ' KB' : '' }}</small>
                 </div>
                 <div class="actions">
                   <label class="toggle sm">
-                    <input type="checkbox" [checked]="bg.isActive" (change)="toggleBg(bg)" />
+                    <input type="checkbox" [checked]="bg.visibility === 'public'" (change)="toggleBg(bg)" />
                   </label>
                   <button class="btn sm danger ghost" (click)="removeBg(bg)">Delete</button>
                 </div>
@@ -227,7 +227,7 @@ export class AssetsComponent implements OnInit {
   }
 
   toggleBg(bg: BackgroundAsset) {
-    this.api.updateBackgroundAsset(bg.id, { isActive: !bg.isActive } as any).subscribe({ next: () => this.loadBackgrounds() });
+    this.api.updateBackgroundAsset(bg.id, { visibility: bg.visibility === 'public' ? 'private' : 'public' } as any).subscribe({ next: () => this.loadBackgrounds() });
   }
 
   removeBg(bg: BackgroundAsset) {
@@ -241,5 +241,9 @@ export class AssetsComponent implements OnInit {
 
   private loadBackgrounds() {
     this.api.getBackgroundAssets().subscribe({ next: (c) => this.backgrounds.set(c) });
+  }
+
+  bgUrl(bg: BackgroundAsset): string {
+    return `http://localhost:3000/${bg.path.replace(/\\/g, '/')}`;
   }
 }

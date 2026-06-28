@@ -27,13 +27,13 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">+</span>
           <span>Create</span>
         </a>
+        <a routerLink="/generate-from-video" routerLinkActive="active" class="nav-item">
+          <span class="icon">▶</span>
+          <span>Create from Video</span>
+        </a>
         <a routerLink="/content" routerLinkActive="active" class="nav-item">
           <span class="icon">📄</span>
           <span>Content</span>
-        </a>
-        <a routerLink="/video-content/new" routerLinkActive="active" class="nav-item">
-          <span class="icon">✎</span>
-          <span>New Content</span>
         </a>
         <a routerLink="/backgrounds" routerLinkActive="active" class="nav-item">
           <span class="icon">🖼</span>
