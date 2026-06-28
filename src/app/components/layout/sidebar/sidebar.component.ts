@@ -23,6 +23,10 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">▣</span>
           <span>Videos</span>
         </a>
+        <a routerLink="/video-metadata" routerLinkActive="active" class="nav-item">
+          <span class="icon">🎞</span>
+          <span>Video Metadata</span>
+        </a>
         <a routerLink="/create" routerLinkActive="active" class="nav-item">
           <span class="icon">+</span>
           <span>Create</span>

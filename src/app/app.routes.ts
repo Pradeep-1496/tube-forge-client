@@ -14,6 +14,7 @@ import { AudiosComponent } from './pages/audios/audios.component';
 import { SubscribeImagesComponent } from './pages/subscribe-images/subscribe-images.component';
 import { GenerationDetailComponent } from './pages/generation/detail/generation-detail.component';
 import { GenerateFromVideoComponent } from './pages/generate-from-video/generate-from-video.component';
+import { VideoMetadataComponent } from './pages/video-metadata/video-metadata.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -27,6 +28,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'videos', component: VideosComponent },
+      { path: 'video-metadata', component: VideoMetadataComponent },
       { path: 'create', component: CreateVideoComponent },
       { path: 'content', component: ContentComponent },
       { path: 'video-content/:id', component: VideoContentDetailComponent },

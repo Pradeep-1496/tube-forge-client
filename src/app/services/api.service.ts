@@ -151,7 +151,26 @@ export interface ContentItem {
 
 export interface MetadataItem {
   id: string;
-  [key: string]: unknown;
+  title: string;
+  description: string;
+  tags: string[];
+  file_name: string;
+  category_id: string;
+  default_language: string;
+  privacy_status: string;
+  publish_at: string;
+  self_declared_made_for_kids: boolean;
+  output_video_path: string;
+  channelId: string;
+  status: string;
+  youtubeVideoId: string | null;
+  youtubeUrl: string | null;
+  thumbnailPath: string;
+  contentId: string;
+  userId: string;
+  visibility: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SubscribeImage {
