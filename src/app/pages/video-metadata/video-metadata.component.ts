@@ -108,9 +108,6 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
                 >
                   View on YouTube
                 </a>
-                <a class="btn ghost" [href]="videoUrl(item)" download="{{ item.file_name }}">
-                  Download
-                </a>
                 <button class="btn ghost" disabled title="Edit coming soon">
                   Edit
                 </button>
@@ -133,7 +130,9 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
     .empty-icon { font-size: 2.5rem; }
     .empty p { margin: 0; font-style: italic; }
 
-    .card-grid { display: flex; flex-direction: column; gap: 1.5rem; }
+    .card-grid { columns: 2; column-gap: 1.2rem; }
+    @media (max-width: 860px) { .card-grid { columns: 1; } }
+    @media (min-width: 1400px) { .card-grid { columns: 3; } }
 
     .card {
       background: var(--surface);
@@ -141,6 +140,8 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
       border-radius: 1rem;
       overflow: hidden;
       transition: border-color 0.2s ease;
+      break-inside: avoid;
+      margin-bottom: 1.2rem;
     }
     .card:hover { border-color: var(--accent); }
 
@@ -151,7 +152,6 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
     .video-player {
       width: 100%;
       display: block;
-      max-height: 560px;
       outline: none;
     }
 
