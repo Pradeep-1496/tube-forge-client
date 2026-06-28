@@ -80,13 +80,13 @@ type ViewState = 'form' | 'generating' | 'result';
             />
 
             <div class="field">
-              <label class="field-label">Published Date</label>
+              <label class="field-label">Published Date {{ selectedChannelId }}</label>
+
               <input type="datetime-local" class="field-input" [(ngModel)]="publishDate" />
             </div>
           </div>
 
           <div class="form-actions">
-            <button class="btn ghost" (click)="router.navigate(['/dashboard'])">Cancel</button>
             <button class="btn primary" (click)="onGenerate()" [disabled]="!canGenerate()">
               Generate Video
             </button>
@@ -392,7 +392,7 @@ export class GenerateFromVideoComponent implements OnInit {
     this.api.getBackgroundVideos().subscribe({
       next: (items) => {
         this.bgVideoOptions.set(
-          items.map((i) => ({ value: i.id, label: `${i.name} (${i.type})` })),
+          items.map((i) => ({ value: i.bg_video_id, label: `${i.name} (${i.type})` })),
         );
       },
     });
@@ -414,6 +414,7 @@ export class GenerateFromVideoComponent implements OnInit {
   }
 
   onGenerate() {
+
     if (!this.canGenerate()) return;
 
     console.debug('[GenerateFromVideo] Starting generation', {
@@ -430,7 +431,7 @@ export class GenerateFromVideoComponent implements OnInit {
       .generateFromVideo(this.selectedContentId, this.selectedBgVideoId, {
         audioId: this.selectedAudioId || undefined,
         theme: this.selectedTheme || undefined,
-        youtube_channel_id: this.selectedChannelId,
+        channelId: this.selectedChannelId,
         publishedDate: this.publishDate || undefined,
         subscribeImageId: this.selectedSubscribeId || undefined,
       })

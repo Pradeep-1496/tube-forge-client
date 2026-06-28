@@ -104,7 +104,7 @@ export interface AudioAsset {
 }
 
 export interface BackgroundVideo {
-  id: string;
+  bg_video_id: string;
   name: string;
   path: string;
   size: number;
@@ -419,7 +419,7 @@ export class ApiService {
     payload: {
       audioId?: string;
       theme?: string;
-      youtube_channel_id?: string;
+      channelId?: string;
       publishedDate?: string;
       subscribeImageId?: string;
     } = {},

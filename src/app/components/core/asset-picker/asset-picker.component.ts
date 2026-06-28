@@ -129,7 +129,7 @@ export class AssetPickerComponent implements OnInit {
         this.title.set('Background Video');
         this.showSearch.set(true);
         this.api.getBackgroundVideos().subscribe({
-          next: (items: BackgroundVideo[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type })))
+          next: (items: BackgroundVideo[]) => this.options.set(items.map(i => ({ id: i.bg_video_id, name: i.name, subtitle: i.type })))
         });
         break;
       case 'audios':

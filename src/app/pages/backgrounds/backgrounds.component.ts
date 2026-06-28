@@ -82,7 +82,7 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
             </div>
           } @else {
             <div class="grid">
-              @for (bv of bvService.items$(); track bv.id) {
+              @for (bv of bvService.items$(); track bv.bg_video_id) {
                 <article class="card video-card" [class.inactive]="bv.visibility !== 'public'" (dblclick)="openPreview(bvService.getSrc(bv), 'video', bv.name, isPortrait(bv))">
                   <div class="vid-preview" [class.portrait]="isPortrait(bv)" [class.landscape]="!isPortrait(bv)">
                     <app-media-asset
