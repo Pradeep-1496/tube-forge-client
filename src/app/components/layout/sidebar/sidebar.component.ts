@@ -31,13 +31,29 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">📄</span>
           <span>Content</span>
         </a>
+        <a routerLink="/video-content/new" routerLinkActive="active" class="nav-item">
+          <span class="icon">✎</span>
+          <span>New Content</span>
+        </a>
+        <a routerLink="/backgrounds" routerLinkActive="active" class="nav-item">
+          <span class="icon">🖼</span>
+          <span>Backgrounds</span>
+        </a>
+        <a routerLink="/audios" routerLinkActive="active" class="nav-item">
+          <span class="icon">♪</span>
+          <span>Audios</span>
+        </a>
+        <a routerLink="/subscribe-images" routerLinkActive="active" class="nav-item">
+          <span class="icon">⊞</span>
+          <span>Subscribe Imgs</span>
+        </a>
         <a routerLink="/channels" routerLinkActive="active" class="nav-item">
           <span class="icon">◎</span>
           <span>Channels</span>
         </a>
         <a routerLink="/assets" routerLinkActive="active" class="nav-item">
           <span class="icon">▦</span>
-          <span>Assets</span>
+          <span>Legacy Assets</span>
         </a>
         <a routerLink="/settings" routerLinkActive="active" class="nav-item">
           <span class="icon">⚙</span>

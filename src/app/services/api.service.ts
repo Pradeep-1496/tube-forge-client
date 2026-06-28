@@ -110,6 +110,28 @@ export interface BackgroundVideo {
   createdAt?: string;
 }
 
+export interface VideoContent {
+  id: string;
+  title: string;
+  content: string;
+  visibility: 'public' | 'private';
+  userId: string;
+  user?: { name: string };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GenerateRequest {
+  videoContentId: string;
+  backgroundId?: string;
+  backgroundVideoId?: string;
+  audioId?: string;
+  theme?: string;
+  subscribeImageId?: string;
+  channelId: string;
+  publishedDate: string;
+}
+
 export interface ContentItem {
   id: string;
   title: string;
