@@ -196,8 +196,7 @@ export class LoginComponent {
     const { email, password } = this.form.getRawValue();
     this.api.login({ email, password }).subscribe({
       next: (res: LoginResponse) => {
-        this.auth.login(res.access_token);
-
+        this.auth.login(res.access_token, { id: '', name: res.name, email: res.email });
         if (res.access_token) this.router.navigate(['/dashboard']);
       },
       error: (err: { error?: { message?: string } }) => {

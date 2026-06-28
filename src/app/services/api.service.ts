@@ -117,6 +117,7 @@ export interface ContentItem {
   type: string;
   visibility: string;
   userId: string;
+  user?: { name: string };
   createdAt?: string;
   updatedAt?: string;
 }

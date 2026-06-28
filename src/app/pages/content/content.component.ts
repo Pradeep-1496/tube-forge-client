@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ApiService, ContentItem } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-content',
@@ -26,8 +27,10 @@ import { ApiService, ContentItem } from '../../services/api.service';
             </div>
             <p class="body">{{ item.content }}</p>
             <div class="meta">
-              <span>Visibility: <b>{{ item.visibility }}</b></span>
-              <span>By: <b>{{ item.userId }}</b></span>
+              <span>By: <b>{{ item.user?.name || 'Unknown' }}</b></span>
+              @if (isOwned(item)) {
+                <span class="owned">Owned</span>
+              }
             </div>
             <div class="actions">
               <button class="btn sm ghost" (click)="startEdit(item)">Edit</button>
@@ -153,6 +156,20 @@ import { ApiService, ContentItem } from '../../services/api.service';
       .meta b {
         color: var(--text);
       }
+      .owned {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        color: var(--success);
+        text-transform: uppercase;
+        font-weight: 700;
+        background: rgba(34, 197, 94, 0.12);
+        border: 1px solid rgba(34, 197, 94, 0.35);
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        width: fit-content;
+      }
       .editor {
         background: var(--border-subtle);
         border: 1px solid var(--border);
@@ -235,9 +252,10 @@ import { ApiService, ContentItem } from '../../services/api.service';
 export class ContentComponent implements OnInit {
   items = signal<ContentItem[]>([]);
   editing = signal<ContentItem | null>(null);
+  currentUserId = signal<string>('');
   form: ReturnType<typeof this.fb.group>;
 
-  constructor(private readonly api: ApiService, private readonly fb: FormBuilder) {
+  constructor(private readonly api: ApiService, private readonly fb: FormBuilder, private readonly auth: AuthService) {
     this.form = this.fb.group({
       title: ['', Validators.required],
       content: ['', Validators.required],
@@ -247,7 +265,14 @@ export class ContentComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const user = this.auth.getCurrentUser();
+    if (user) this.currentUserId.set(user.id);
     this.loadItems();
+  }
+
+  isOwned(item: ContentItem): boolean {
+    const me = this.currentUserId();
+    return !!me && item.userId === me;
   }
 
   loadItems() {
