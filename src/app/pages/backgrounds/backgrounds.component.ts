@@ -40,11 +40,12 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
             <div class="grid">
               @for (bg of bgService.items$(); track bg.id) {
                 <article class="card" [class.inactive]="bg.visibility !== 'public'" (dblclick)="openPreview(bgService.getSrc(bg), 'image', bg.name)">
-                  <div class="thumb">
+                  <div class="thumb" [class.portrait]="isPortrait(bg)" [class.landscape]="!isPortrait(bg)">
                     <app-media-asset
                       type="image"
                       [src]="bgService.getSrc(bg)"
                       [alt]="bg.name"
+                      [aspect]="isPortrait(bg) ? '9/16' : '16/9'"
                     />
                   </div>
                   <div class="info">
@@ -136,7 +137,10 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
     .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
     .card.inactive { opacity: 0.5; }
     .video-card { cursor: pointer; }
-    .thumb { aspect-ratio: 16/9; background: var(--bg); border-radius: 0.5rem; overflow: hidden; }
+    .thumb { background: var(--bg); border-radius: 0.5rem; overflow: hidden; }
+    .thumb.portrait { aspect-ratio: 9/16; max-height: 320px; }
+    .thumb.portrait :deep(img) { object-fit: contain !important; }
+    .thumb.landscape { aspect-ratio: 16/9; }
     .vid-preview { aspect-ratio: 16/9; background: var(--bg); border-radius: 0.5rem; overflow: hidden; }
     .vid-preview.portrait { aspect-ratio: 9/16; }
     .vid-preview.landscape { aspect-ratio: 16/9; }

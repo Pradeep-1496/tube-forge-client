@@ -69,6 +69,7 @@ import { CommonModule } from '@angular/common';
     .media-wrap.aspect-4-3 { aspect-ratio: 4/3; }
     img, video { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; transition: opacity 0.25s; }
     .media-wrap.aspect-9-16 video { object-fit: contain; }
+    .media-wrap.aspect-9-16 img { object-fit: contain; }
     audio { width: 100%; }
     audio.hidden { display: none; }
     audio::-webkit-media-controls-panel { background: var(--border-subtle); }
