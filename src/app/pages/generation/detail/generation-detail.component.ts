@@ -79,7 +79,7 @@ export class GenerationDetailComponent implements OnInit {
         this.statusText.set('Generation complete!');
         this.done.set(true);
         if (res.videoPath) {
-          this.videoUrl.set(res.videoPath);
+          this.videoUrl.set(this.api.toVideoUrl(res.videoPath));
           this.metadata.set({
             title: 'Generated Video',
             createdAt: new Date().toISOString(),

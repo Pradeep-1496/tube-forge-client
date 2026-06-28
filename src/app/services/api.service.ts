@@ -413,6 +413,15 @@ export class ApiService {
     );
   }
 
+  toVideoUrl(outputPath: string): string {
+    if (!outputPath) return '';
+    if (outputPath.startsWith('http://') || outputPath.startsWith('https://')) {
+      return outputPath;
+    }
+    const filename = outputPath.replace(/\\/g, '/').split('/').pop() || '';
+    return `${this.baseUrl}/output-videos/${filename}`;
+  }
+
   generateFromVideo(
     videoContentId: string,
     backgroundVideoId: string,

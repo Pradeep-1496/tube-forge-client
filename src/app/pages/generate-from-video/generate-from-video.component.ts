@@ -441,7 +441,7 @@ export class GenerateFromVideoComponent implements OnInit {
           this.genProgress.set(100);
           this.genStatus.set('Generation complete!');
           this.genDone.set(true);
-          this.videoUrl.set(res.outputPath);
+          this.videoUrl.set(this.api.toVideoUrl(res.outputPath));
           this.videoMetadata.set({
             title: res.metadata.title,
             createdAt: res.metadata.createdAt,
