@@ -13,6 +13,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
         <button class="floating-burger" (click)="toggleSidebar()" aria-label="Open sidebar">☰</button>
       }
       <main class="main" [class.expanded]="sidebarCollapsed()">
+        <div class="calibration-bar"></div>
         <div class="container">
           <router-outlet />
         </div>
@@ -23,6 +24,13 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     .layout { display: flex; min-height: 100vh; background: var(--bg); color: var(--text); }
     .main { flex: 1; margin-left: 232px; min-height: 100vh; transition: margin-left 0.25s ease; }
     .main.expanded { margin-left: 0; }
+    .calibration-bar {
+      height: 3px;
+      width: 100%;
+      background: linear-gradient(90deg, var(--accent), #d4a030, var(--accent), #d4a030, var(--accent));
+      background-size: 200% 100%;
+      opacity: 0.9;
+    }
     .container { max-width: 1200px; margin: 0 auto; padding: 1.8rem 2rem; }
     .floating-burger {
       position: fixed;

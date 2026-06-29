@@ -1,34 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  --bg: #060608;
-  --surface: #0b0b0f;
-  --text: #f9fafb;
-  --muted: #9ca3af;
-  --border: rgba(255,255,255,0.1);
-  --border-subtle: rgba(255,255,255,0.06);
-  --accent: #6366f1;
-  --accent-weak: rgba(99,102,241,0.15);
-  --ring: rgba(99,102,241,0.35);
-  --danger: #ef4444;
-  --success: #10b981;
+  --bg: #09090b;
+  --surface: #111114;
+  --surface-2: #18181c;
+  --text: #eeeef2;
+  --muted: #7a7a8c;
+  --border: rgba(255,255,255,0.08);
+  --border-subtle: rgba(255,255,255,0.04);
+  --accent: #e8b84b;
+  --accent-weak: rgba(232,184,75,0.1);
+  --ring: rgba(232,184,75,0.25);
+  --danger: #e0483a;
+  --success: #3aaa88;
+  --info: #4a8fe0;
   color-scheme: dark;
 }
 
 html.light {
-  --bg: #f4f5f7;
-  --surface: #ffffff;
-  --text: #111318;
-  --muted: #5f6b7a;
-  --border: rgba(0,0,0,0.1);
-  --border-subtle: rgba(0,0,0,0.06);
-  --accent: #4f46e5;
-  --accent-weak: rgba(79,70,229,0.12);
-  --ring: rgba(79,70,229,0.25);
-  --danger: #dc2626;
-  --success: #059669;
+  --bg: #f0efe8;
+  --surface: #fafaf7;
+  --surface-2: #f4f3ee;
+  --text: #1c1b16;
+  --muted: #6b6a62;
+  --border: rgba(0,0,0,0.08);
+  --border-subtle: rgba(0,0,0,0.04);
+  --accent: #c4942b;
+  --accent-weak: rgba(196,148,43,0.1);
+  --ring: rgba(196,148,43,0.25);
+  --danger: #c7362a;
+  --success: #2d8a6e;
+  --info: #3a7abf;
   color-scheme: light;
 }
 
@@ -45,10 +49,21 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+code, pre, .mono {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
 a { color: inherit; }
 
 img, figure { max-width: 100%; display: block; }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-::selection { background: rgba(99,102,241,0.35); }
+::selection { background: rgba(232,184,75,0.3); }
+html.light ::selection { background: rgba(196,148,43,0.3); }

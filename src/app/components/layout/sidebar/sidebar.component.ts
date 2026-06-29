@@ -15,7 +15,7 @@ import { AuthService } from '../../../services/auth.service';
           {{ collapsed() ? '☰' : '✕' }}
         </button>
         @if (!collapsed()) {
-          <div class="logo">▶</div>
+          <div class="logo">TF</div>
           <div class="name">TubeForge</div>
         }
       </div>
@@ -85,7 +85,7 @@ import { AuthService } from '../../../services/auth.service';
       width: 232px;
       height: 100vh;
       background: var(--surface);
-      border-right: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       position: fixed;
@@ -103,7 +103,7 @@ import { AuthService } from '../../../services/auth.service';
       align-items: center;
       gap: 0.75rem;
       padding: 0 1rem;
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border);
     }
     .burger {
       width: 2.2rem;
@@ -120,52 +120,55 @@ import { AuthService } from '../../../services/auth.service';
       flex-shrink: 0;
       transition: background 0.15s ease;
     }
-    .burger:hover { background: var(--border-subtle); }
+    .burger:hover { background: var(--surface-2); }
     .logo {
       width: 2rem; height: 2rem;
-      background: linear-gradient(135deg, #6366f1, #a855f7);
+      background: linear-gradient(135deg, #e8b84b, #d4a030);
       border-radius: 0.6rem;
       display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 700; font-size: 0.75rem;
+      color: #09090b; font-weight: 700; font-size: 0.7rem;
+      letter-spacing: 0.02em;
+      font-family: 'JetBrains Mono', monospace;
     }
-    .name { color: var(--text); font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
-    .nav { flex: 1; padding: 1rem 0.8rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .name { color: var(--text); font-weight: 600; font-size: 1.05rem; letter-spacing: -0.02em; font-family: 'Space Grotesk', system-ui, sans-serif; }
+    .nav { flex: 1; padding: 1rem 0.8rem; display: flex; flex-direction: column; gap: 0.15rem; }
     .nav-item {
       display: flex; align-items: center; gap: 0.7rem;
-      padding: 0.6rem 0.8rem;
-      border-radius: 0.55rem;
+      padding: 0.55rem 0.8rem;
+      border-radius: 0.5rem;
       color: var(--muted);
       text-decoration: none;
       font-size: 0.88rem;
       font-weight: 500;
       transition: all 0.15s ease;
       white-space: nowrap;
+      border: 1px solid transparent;
     }
-    .nav-item:hover { background: var(--border-subtle); color: var(--text); }
+    .nav-item:hover { background: var(--surface-2); color: var(--text); }
     .nav-item.active {
       background: var(--accent-weak);
-      color: var(--text);
-      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-color: var(--ring);
     }
     .icon { width: 1.2rem; text-align: center; font-family: monospace; font-size: 0.9rem; flex-shrink: 0; }
-    .footer { padding: 1rem 1.4rem; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 0.4rem; }
+    .footer { padding: 1rem 1.4rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.4rem; }
     .theme-toggle {
       display: flex; align-items: center; gap: 0.6rem;
       background: transparent; border: 1px solid var(--border); color: var(--muted);
-      padding: 0.45rem 0.7rem; border-radius: 0.55rem; font-size: 0.8rem; cursor: pointer;
+      padding: 0.45rem 0.7rem; border-radius: 0.5rem; font-size: 0.8rem; cursor: pointer;
       transition: all 0.15s ease;
     }
-    .theme-toggle:hover { background: var(--border-subtle); color: var(--text); }
+    .theme-toggle:hover { background: var(--surface-2); color: var(--text); }
     .theme-toggle .icon { font-family: system-ui; font-size: 1rem; }
     .auth-toggle {
       display: flex; align-items: center; gap: 0.6rem;
       background: transparent; border: 1px solid var(--border); color: var(--muted);
-      padding: 0.45rem 0.7rem; border-radius: 0.55rem; font-size: 0.8rem; cursor: pointer;
+      padding: 0.45rem 0.7rem; border-radius: 0.5rem; font-size: 0.8rem; cursor: pointer;
       transition: all 0.15s ease;
     }
-    .auth-toggle:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .auth-toggle:hover { background: rgba(224,72,58,0.15); color: var(--danger); }
     .auth-toggle .icon { font-family: system-ui; font-size: 1rem; }
-    .build { font-size: 0.7rem; color: var(--muted); font-family: monospace; }
+    .build { font-size: 0.7rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
   `]
 })
 export class SidebarComponent {

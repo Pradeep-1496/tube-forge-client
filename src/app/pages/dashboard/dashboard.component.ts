@@ -16,7 +16,7 @@ import { catchError } from 'rxjs/operators';
       <header class="page-header">
         <div>
           <h1>Dashboard</h1>
-          <p>Platform status at a glance.</p>
+          <p>Platform status at a glance</p>
         </div>
         <div class="header-right">
           <span class="backend-pill" [class.online]="backendOnline()" [class.offline]="!backendOnline()">
@@ -31,32 +31,32 @@ import { catchError } from 'rxjs/operators';
           <app-stats-card
             [kpi]="kpi('Channels', data().channels)"
             [max]="data().channels || 10"
-            [gradient]="'linear-gradient(90deg, #6366f1, #818cf8)'"
+            [gradient]="'linear-gradient(90deg, #e8b84b, #d4a030)'"
           />
           <app-stats-card
             [kpi]="kpi('Content Items', data().content)"
             [max]="data().content || 50"
-            [gradient]="'linear-gradient(90deg, #ec4899, #f472b6)'"
+            [gradient]="'linear-gradient(90deg, #e8b84b, #c99a2e)'"
           />
           <app-stats-card
             [kpi]="kpi('Metadata Records', data().metadata)"
             [max]="data().metadata || 50"
-            [gradient]="'linear-gradient(90deg, #f59e0b, #fbbf24)'"
+            [gradient]="'linear-gradient(90deg, #d4a030, #e8b84b)'"
           />
           <app-stats-card
             [kpi]="kpi('Backgrounds', data().backgrounds + data().backgroundVideos, data().backgroundVideos + ' video')"
             [max]="(data().backgrounds + data().backgroundVideos) || 20"
-            [gradient]="'linear-gradient(90deg, #14b8a6, #2dd4bf)'"
+            [gradient]="'linear-gradient(90deg, #e8b84b, #c4942b)'"
           />
           <app-stats-card
             [kpi]="kpi('Audios', data().audios)"
             [max]="data().audios || 20"
-            [gradient]="'linear-gradient(90deg, #3b82f6, #60a5fa)'"
+            [gradient]="'linear-gradient(90deg, #d4a030, #e8b84b)'"
           />
           <app-stats-card
             [kpi]="kpi('Subscribe Images', data().subscribeImages)"
             [max]="data().subscribeImages || 10"
-            [gradient]="'linear-gradient(90deg, #a855f7, #c084fc)'"
+            [gradient]="'linear-gradient(90deg, #c4942b, #e8b84b)'"
           />
         </section>
 
@@ -84,8 +84,8 @@ import { catchError } from 'rxjs/operators';
   styles: [`
     .dashboard { display: flex; flex-direction: column; gap: 1.6rem; }
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
-    .page-header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text); margin: 0; }
-    .page-header p { color: var(--muted); margin: 0.25rem 0 0; font-size: 0.92rem; }
+    .page-header h1 { font-size: 1.6rem; font-weight: 600; color: var(--text); margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; letter-spacing: -0.02em; }
+    .page-header p { color: var(--muted); margin: 0.3rem 0 0; font-size: 0.92rem; }
     .header-right { display: flex; align-items: center; }
     .backend-pill {
       display: inline-flex; align-items: center; gap: 0.45rem;
@@ -93,8 +93,8 @@ import { catchError } from 'rxjs/operators';
       font-size: 0.78rem; font-weight: 600;
       border: 1px solid var(--border);
     }
-    .backend-pill.online { background: rgba(16,185,129,0.12); color: var(--success); border-color: rgba(16,185,129,0.25); }
-    .backend-pill.offline { background: rgba(239,68,68,0.12); color: var(--danger); border-color: rgba(239,68,68,0.25); }
+    .backend-pill.online { background: rgba(58,170,136,0.12); color: var(--success); border-color: rgba(58,170,136,0.25); }
+    .backend-pill.offline { background: rgba(224,72,58,0.12); color: var(--danger); border-color: rgba(224,72,58,0.25); }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
     .backend-pill.online .dot { background: var(--success); }
     .backend-pill.offline .dot { background: var(--danger); }
@@ -106,13 +106,13 @@ import { catchError } from 'rxjs/operators';
     .recent-item {
       display: flex; justify-content: space-between; align-items: center; gap: 1rem;
       padding: 0.7rem 1rem; border-radius: 0.6rem;
-      background: var(--surface); border: 1px solid var(--border-subtle);
-      text-decoration: none; transition: border-color 0.15s ease;
+      background: var(--surface); border: 1px solid var(--border);
+      text-decoration: none; transition: border-color 0.2s ease, background 0.2s ease;
     }
-    .recent-item:hover { border-color: var(--accent); }
+    .recent-item:hover { border-color: var(--accent); background: var(--surface-2); }
     .recent-info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
     .recent-title { font-size: 0.88rem; color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .recent-meta { font-size: 0.75rem; color: var(--muted); }
+    .recent-meta { font-size: 0.75rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
   `]
 })
 export class DashboardComponent implements OnInit {

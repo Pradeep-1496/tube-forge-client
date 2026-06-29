@@ -52,22 +52,22 @@ export interface Column<T> {
     </div>
   `,
   styles: [`
-    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 0.9rem; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 0.75rem; }
     table { width: 100%; border-collapse: collapse; min-width: 720px; }
-    thead { background: var(--border-subtle); }
+    thead { background: var(--surface); }
     th, td { padding: 0.75rem 1rem; text-align: left; font-size: 0.88rem; color: var(--text); }
     th { font-weight: 600; color: var(--muted); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); }
-    tr { border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease; }
+    tr { border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--border-subtle); }
-    tr.row-error td { background: rgba(239,68,68,0.08); }
+    tr:hover td { background: var(--surface-2); }
+    tr.row-error td { background: rgba(224,72,58,0.08); }
     td.actions, th.actions-th { text-align: right; white-space: nowrap; }
     td.empty { text-align: center; color: var(--muted); padding: 2.5rem; font-style: italic; }
     .btn { padding: 0.5rem 1rem; border-radius: 0.55rem; border: 1px solid transparent; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.15s ease; }
-    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.primary { background: var(--accent); color: #09090b; }
     .btn.ghost { background: transparent; color: var(--text); border-color: var(--border); }
     .btn.sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; border-radius: 0.45rem; }
-    .btn.danger.ghost:hover:not(:disabled) { background: rgba(239,68,68,0.12); color: var(--danger); }
+    .btn.danger.ghost:hover:not(:disabled) { background: rgba(224,72,58,0.12); color: var(--danger); }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
   `]
 })

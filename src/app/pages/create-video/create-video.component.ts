@@ -246,7 +246,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
       .screen {
         aspect-ratio: 9 / 16;
         position: relative;
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        background: linear-gradient(135deg, #18181c 0%, #09090b 100%);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -294,7 +294,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
         align-items: baseline;
       }
       .speaker {
-        color: #facc15;
+        color: var(--accent);
         font-weight: 700;
         font-size: 0.95rem;
       }

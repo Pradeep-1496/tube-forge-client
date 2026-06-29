@@ -33,11 +33,11 @@ import { CommonModule } from '@angular/common';
     h3 { margin: 0; color: var(--text); font-size: 1.1rem; }
     .status-text { color: var(--muted); font-size: 0.88rem; margin: 0; text-align: center; }
     .bar-track { width: 100%; max-width: 320px; height: 6px; background: var(--border); border-radius: 9999px; overflow: hidden; }
-    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #a855f7); border-radius: 9999px; transition: width 0.5s ease; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #d4a030); border-radius: 9999px; transition: width 0.5s ease; }
     .eta { color: var(--muted); font-size: 0.75rem; margin: 0; font-style: italic; }
-    .error-msg { color: var(--danger); font-size: 0.85rem; padding: 0.5rem 1rem; background: rgba(239,68,68,0.1); border-radius: 0.5rem; text-align: center; }
+    .error-msg { color: var(--danger); font-size: 0.85rem; padding: 0.5rem 1rem; background: rgba(224,72,58,0.1); border-radius: 0.5rem; text-align: center; }
     .btn { padding: 0.5rem 1.2rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
-    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.primary { background: var(--accent); color: #09090b; }
     .btn.danger { background: var(--danger); color: #fff; }
   `]
 })

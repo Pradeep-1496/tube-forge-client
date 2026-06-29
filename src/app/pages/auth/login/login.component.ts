@@ -11,9 +11,10 @@ import { AuthService } from '../../../services/auth.service';
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="auth-page">
+      <div class="calibration-bar"></div>
       <div class="auth-card">
         <header class="auth-header">
-          <div class="logo">▶</div>
+          <div class="logo">TF</div>
           <h1>Welcome back</h1>
           <p>Sign in to TubeForge</p>
         </header>
@@ -42,10 +43,22 @@ import { AuthService } from '../../../services/auth.service';
       .auth-page {
         min-height: 100vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         background: var(--bg);
         padding: 2rem;
+      }
+      .calibration-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 100%;
+        background: linear-gradient(90deg, var(--accent), #d4a030, var(--accent), #d4a030, var(--accent));
+        background-size: 200% 100%;
+        opacity: 0.9;
+        z-index: 10;
       }
       .auth-card {
         width: 100%;
@@ -53,35 +66,40 @@ import { AuthService } from '../../../services/auth.service';
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 1rem;
-        padding: 2.2rem 2rem;
+        padding: 2.5rem 2rem;
         display: flex;
         flex-direction: column;
-        gap: 1.4rem;
+        gap: 1.5rem;
+        position: relative;
       }
       .auth-header {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.6rem;
         text-align: center;
       }
       .logo {
-        width: 2.5rem;
-        height: 2.5rem;
-        background: linear-gradient(135deg, #6366f1, #a855f7);
+        width: 2.8rem;
+        height: 2.8rem;
+        background: linear-gradient(135deg, #e8b84b, #d4a030);
         border-radius: 0.65rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #fff;
+        color: #09090b;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.02em;
       }
       .auth-header h1 {
         margin: 0;
-        font-size: 1.4rem;
-        font-weight: 700;
+        font-size: 1.5rem;
+        font-weight: 600;
         color: var(--text);
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        letter-spacing: -0.02em;
       }
       .auth-header p {
         margin: 0;
@@ -104,7 +122,7 @@ import { AuthService } from '../../../services/auth.service';
         font-weight: 500;
       }
       input {
-        background: var(--border-subtle);
+        background: var(--bg);
         border: 1px solid var(--border);
         color: var(--text);
         padding: 0.65rem 0.9rem;
@@ -112,6 +130,7 @@ import { AuthService } from '../../../services/auth.service';
         font-size: 0.92rem;
         width: 100%;
         font-family: inherit;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
       }
       input:focus {
         outline: none;
@@ -135,17 +154,20 @@ import { AuthService } from '../../../services/auth.service';
         justify-content: center;
         gap: 0.4rem;
         transition: all 0.15s ease;
+        font-family: 'Inter', system-ui, sans-serif;
       }
       .btn.primary {
         background: var(--accent);
-        color: #fff;
+        color: #09090b;
         border-color: var(--accent);
+        font-weight: 600;
       }
       .btn.primary:hover:not(:disabled) {
-        filter: brightness(1.1);
+        background: #f0c55a;
+        border-color: #f0c55a;
       }
       .btn:disabled {
-        opacity: 0.6;
+        opacity: 0.5;
         cursor: not-allowed;
       }
       .full {

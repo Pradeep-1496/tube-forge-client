@@ -29,26 +29,27 @@ interface Kpi {
   `,
   styles: [`
     .card {
-      background: var(--border-subtle);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 0.9rem;
+      border-radius: 0.75rem;
       padding: 1.2rem 1.4rem;
       display: flex;
       flex-direction: column;
       gap: 0.9rem;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      border-top: 2px solid var(--accent-weak);
     }
     .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
       border-color: var(--accent);
+      background: var(--surface-2);
+      border-top-color: var(--accent);
     }
     .meta { display: flex; flex-direction: column; gap: 0.2rem; }
-    .label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-    .value { font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; }
+    .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    .value { font-size: 2rem; font-weight: 600; color: var(--text); line-height: 1; font-family: 'Space Grotesk', system-ui, sans-serif; letter-spacing: -0.02em; }
     .hint { font-size: 0.78rem; color: var(--muted); }
     .track {
-      height: 3px; background: var(--border-subtle); border-radius: 9999px; overflow: hidden;
+      height: 3px; background: var(--border); border-radius: 9999px; overflow: hidden;
     }
     .bar { height: 100%; border-radius: 9999px; transition: width 0.6s ease; }
   `]
@@ -56,7 +57,7 @@ interface Kpi {
 export class StatsCardComponent {
   kpi = input.required<Kpi>();
   max = input<number>(100);
-  gradient = input<string>('linear-gradient(90deg, #6366f1, #a855f7)');
+  gradient = input<string>('linear-gradient(90deg, #e8b84b, #d4a030)');
 
   get percent(): number {
     const raw = (this.kpi().value / this.max()) * 100;

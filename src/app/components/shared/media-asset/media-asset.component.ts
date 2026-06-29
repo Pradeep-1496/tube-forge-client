@@ -72,7 +72,7 @@ import { CommonModule } from '@angular/common';
     .media-wrap.aspect-9-16 img { object-fit: contain; }
     audio { width: 100%; }
     audio.hidden { display: none; }
-    audio::-webkit-media-controls-panel { background: var(--border-subtle); }
+    audio::-webkit-media-controls-panel { background: var(--surface); }
     .skeleton-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none; }
     .skeleton-round { border-radius: 50%; }
     .skeleton-pulse { width: 100%; height: 100%; background: var(--border); border-radius: inherit; animation: pulse 1.5s ease-in-out infinite; }

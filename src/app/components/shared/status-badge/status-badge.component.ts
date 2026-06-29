@@ -18,16 +18,16 @@ export type Status = 'draft' | 'generating' | 'generated' | 'uploading' | 'sched
     .badge {
       display: inline-flex; align-items: center; gap: 0.5rem;
       padding: 0.35rem 0.85rem; border-radius: 9999px;
-      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em;
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em;
       text-transform: capitalize;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04); color: #d1d5db;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted);
     }
-    .generating, .uploading { background: rgba(59,130,246,0.12); color: #93c5fd; border-color: rgba(59,130,246,0.25); }
-    .generated { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.25); }
-    .scheduled, .published { background: rgba(139,92,246,0.12); color: #c4b5fd; border-color: rgba(139,92,246,0.25); }
-    .failed { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.25); }
-    .draft { background: rgba(107,114,128,0.12); color: #9ca3af; border-color: rgba(107,114,128,0.25); }
+    .generating, .uploading { background: rgba(74,143,224,0.12); color: #93b8f8; border-color: rgba(74,143,224,0.25); }
+    .generated { background: rgba(58,170,136,0.12); color: #5dd4ae; border-color: rgba(58,170,136,0.25); }
+    .scheduled, .published { background: rgba(232,184,75,0.12); color: #e8b84b; border-color: rgba(232,184,75,0.25); }
+    .failed { background: rgba(224,72,58,0.12); color: #e8836a; border-color: rgba(224,72,58,0.25); }
+    .draft { background: rgba(122,122,140,0.12); color: #9a9aac; border-color: rgba(122,122,140,0.25); }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
     .dot.generating, .dot.uploading { animation: pulse 1.6s infinite; }
     .dot.draft { animation: none; }
