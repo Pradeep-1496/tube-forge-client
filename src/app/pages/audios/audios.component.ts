@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AudioService } from '../../services/asset.service';
+import { AuthService } from '../../services/auth.service';
 import { MediaAssetComponent } from '../../components/shared/media-asset/media-asset.component';
 import { AssetUploadFormComponent } from '../../components/shared/asset-upload-form/asset-upload-form.component';
 
@@ -44,14 +45,24 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
                 </div>
                 <div class="info">
                   <div class="name">{{ audio.name }}</div>
-                  <small>{{ audio.length }}s{{ audio.visibility ? ' · ' + audio.visibility : '' }}</small>
-                  @if (audio.size) {
-                    <small class="size">{{ (audio.size / 1024).toFixed(1) }} KB</small>
-                  }
+                  <div class="meta-row">
+                    <small>{{ audio.length }}s{{ audio.visibility ? ' · ' + audio.visibility : '' }}</small>
+                    @if (audio.size) {
+                      <small class="size">{{ (audio.size / 1024).toFixed(1) }} KB</small>
+                    }
+                  </div>
+                  <div class="user-row">
+                    <small class="owner">{{ audio.user?.name || 'Unknown' }}</small>
+                    @if (isOwned(audio)) {
+                      <span class="owned-badge">Owned</span>
+                    }
+                  </div>
                 </div>
-                <div class="actions">
-                  <button class="btn sm danger ghost" (click)="remove(audio)">Delete</button>
-                </div>
+                @if (isOwned(audio)) {
+                  <div class="actions">
+                    <button class="btn sm danger ghost" (click)="remove(audio)">Delete</button>
+                  </div>
+                }
               </article>
             }
             @if (!audioService.items$().length) {
@@ -72,20 +83,18 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
     .skeleton-pulse { width: 100%; height: 60px; background: var(--border); border-radius: 0.5rem; animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.85rem; }
-    .audio-card {
-      background: var(--surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 0.75rem;
-      overflow: hidden;
-      transition: border-color 0.15s ease;
-    }
+    .audio-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 0.75rem; overflow: hidden; transition: border-color 0.15s ease; }
     .audio-card:hover { border-color: var(--border); }
     .player-wrap { background: var(--border-subtle); padding: 0.5rem; }
     .player-wrap audio { width: 100%; height: 40px; }
-    .info { padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.1rem; }
+    .info { padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.25rem; }
     .name { font-size: 0.85rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .meta-row { display: flex; gap: 0.5rem; align-items: center; }
     .info small { font-size: 0.72rem; color: var(--muted); }
     .size { display: block; }
+    .user-row { display: flex; align-items: center; gap: 0.4rem; }
+    .owner { font-size: 0.72rem; color: var(--muted); }
+    .owned-badge { font-size: 0.65rem; font-weight: 700; color: var(--success); text-transform: uppercase; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); padding: 0.1rem 0.45rem; border-radius: 9999px; }
     .actions { padding: 0 0.75rem 0.6rem; }
     .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
     .btn.primary { background: var(--accent); color: #fff; }
@@ -96,11 +105,22 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
 })
 export class AudiosComponent implements OnInit {
   uploading = false;
+  currentUserId = signal<string>('');
 
-  constructor(readonly audioService: AudioService) {}
+  constructor(
+    readonly audioService: AudioService,
+    private readonly auth: AuthService,
+  ) {
+    const user = this.auth.getCurrentUser();
+    if (user) this.currentUserId.set(user.id);
+  }
 
   ngOnInit() {
     this.audioService.load();
+  }
+
+  isOwned(audio: any): boolean {
+    return audio.userId === this.currentUserId();
   }
 
   remove(audio: any) {

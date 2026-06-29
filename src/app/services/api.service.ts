@@ -78,6 +78,7 @@ export interface BackgroundAsset {
   type: string;
   userId: string;
   visibility: Visibility;
+  user?: { name: string };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -99,6 +100,7 @@ export interface AudioAsset {
   size: number;
   userId: string;
   visibility: Visibility;
+  user?: { name: string };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -111,6 +113,7 @@ export interface BackgroundVideo {
   type: string;
   userId: string;
   visibility: Visibility;
+  user?: { name: string };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -193,6 +196,7 @@ export interface SubscribeImage {
   type: string;
   userId: string;
   visibility: Visibility;
+  user?: { name: string };
   createdAt?: string;
   updatedAt?: string;
 }

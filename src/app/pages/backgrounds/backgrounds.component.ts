@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BackgroundService, BackgroundVideoService } from '../../services/asset.service';
+import { AuthService } from '../../services/auth.service';
 import { MediaAssetComponent } from '../../components/shared/media-asset/media-asset.component';
 import { AssetPreviewModalComponent } from '../../components/shared/asset-preview-modal/asset-preview-modal.component';
 import { AssetUploadFormComponent } from '../../components/shared/asset-upload-form/asset-upload-form.component';
@@ -51,10 +52,18 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
                   <div class="info">
                     <div class="name">{{ bg.name }}</div>
                     <small>{{ bg.type }}{{ bg.size ? ' · ' + (bg.size / 1024).toFixed(1) + ' KB' : '' }}</small>
+                    <div class="user-row">
+                      <small class="owner">{{ bg.user?.name || 'Unknown' }}</small>
+                      @if (isOwned(bg)) {
+                        <span class="owned-badge">Owned</span>
+                      }
+                    </div>
                   </div>
-                  <div class="actions">
-                    <button class="btn sm danger ghost" (click)="removeBg(bg)">Delete</button>
-                  </div>
+                  @if (isOwned(bg)) {
+                    <div class="actions">
+                      <button class="btn sm danger ghost" (click)="removeBg(bg)">Delete</button>
+                    </div>
+                  }
                 </article>
               }
               @if (!bgService.items$().length) {
@@ -95,10 +104,18 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
                   <div class="info">
                     <div class="name">{{ bv.name }}</div>
                     <small>{{ bv.type }}{{ bv.size ? ' · ' + (bv.size / 1024).toFixed(1) + ' KB' : '' }}</small>
+                    <div class="user-row">
+                      <small class="owner">{{ bv.user?.name || 'Unknown' }}</small>
+                      @if (isOwned(bv)) {
+                        <span class="owned-badge">Owned</span>
+                      }
+                    </div>
                   </div>
-                  <div class="actions">
-                    <button class="btn sm danger ghost" (click)="removeVideo(bv)">Delete</button>
-                  </div>
+                  @if (isOwned(bv)) {
+                    <div class="actions">
+                      <button class="btn sm danger ghost" (click)="removeVideo(bv)">Delete</button>
+                    </div>
+                  }
                 </article>
               }
               @if (!bvService.items$().length) {
@@ -147,16 +164,19 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
     .info { display: flex; flex-direction: column; gap: 0.15rem; }
     .name { color: var(--text); font-weight: 600; font-size: 0.88rem; }
     small { color: var(--muted); font-size: 0.75rem; }
+    .user-row { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.15rem; }
+    .owner { font-size: 0.72rem; color: var(--muted); }
+    .owned-badge { font-size: 0.65rem; font-weight: 700; color: var(--success); text-transform: uppercase; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); padding: 0.1rem 0.45rem; border-radius: 9999px; }
     .actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
-    .notice { color: var(--muted); font-style: italic; padding: 1rem; text-align: center; }
-    .skeleton-pulse { width: 100%; height: 100%; min-height: 120px; background: var(--border); border-radius: 0.5rem; animation: pulse 1.5s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
     .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
     .btn.primary { background: var(--accent); color: #fff; }
     .btn.primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn.ghost { background: transparent; color: var(--text); border-color: var(--border); }
     .btn.sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; border-radius: 0.45rem; }
     .btn.danger.ghost:hover:not(:disabled) { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .notice { color: var(--muted); font-style: italic; padding: 1rem; text-align: center; }
+    .skeleton-pulse { width: 100%; height: 100%; min-height: 120px; background: var(--border); border-radius: 0.5rem; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
   `]
 })
 export class BackgroundsComponent implements OnInit {
@@ -168,15 +188,24 @@ export class BackgroundsComponent implements OnInit {
   previewPortrait = signal(false);
   previewItems = signal<any[]>([]);
   previewIndex = signal(0);
+  currentUserId = signal<string>('');
 
   constructor(
     readonly bgService: BackgroundService,
     readonly bvService: BackgroundVideoService,
-  ) {}
+    private readonly auth: AuthService,
+  ) {
+    const user = this.auth.getCurrentUser();
+    if (user) this.currentUserId.set(user.id);
+  }
 
   ngOnInit() {
     this.bgService.load();
     this.bvService.load();
+  }
+
+  isOwned(item: any): boolean {
+    return item.userId === this.currentUserId();
   }
 
   isPortrait(item: any): boolean {

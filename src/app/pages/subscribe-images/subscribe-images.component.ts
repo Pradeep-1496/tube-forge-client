@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SubscribeImageService } from '../../services/asset.service';
+import { AuthService } from '../../services/auth.service';
 import { MediaAssetComponent } from '../../components/shared/media-asset/media-asset.component';
 import { AssetUploadFormComponent } from '../../components/shared/asset-upload-form/asset-upload-form.component';
 
@@ -42,15 +43,19 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
                 </div>
                 <div class="info">
                   <div class="name">{{ img.name }}</div>
-              <small>{{ img.type }} · {{ img.size ? (img.size / 1024).toFixed(1) + ' KB' : '' }}</small>
+                  <small>{{ img.type }} · {{ img.size ? (img.size / 1024).toFixed(1) + ' KB' : '' }}</small>
+                  <div class="user-row">
+                    <small class="owner">{{ img.user?.name || 'Unknown' }}</small>
+                    @if (isOwned(img)) {
+                      <span class="owned-badge">Owned</span>
+                    }
+                  </div>
                 </div>
-                <div class="actions">
-                  <label class="toggle">
-                    <input type="checkbox" [checked]="img.visibility === 'public'" (change)="toggle(img)" />
-                    <span>Active</span>
-                  </label>
-                  <button class="btn sm danger ghost" (click)="remove(img)">Delete</button>
-                </div>
+                @if (isOwned(img)) {
+                  <div class="actions">
+                    <button class="btn sm danger ghost" (click)="remove(img)">Delete</button>
+                  </div>
+                }
               </article>
             }
             @if (!subService.items$().length) {
@@ -78,9 +83,10 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
     .info { display: flex; flex-direction: column; gap: 0.15rem; }
     .name { color: var(--text); font-weight: 600; font-size: 0.88rem; }
     small { color: var(--muted); font-size: 0.75rem; }
+    .user-row { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.15rem; }
+    .owner { font-size: 0.72rem; color: var(--muted); }
+    .owned-badge { font-size: 0.65rem; font-weight: 700; color: var(--success); text-transform: uppercase; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); padding: 0.1rem 0.45rem; border-radius: 9999px; }
     .actions { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; }
-    .toggle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--muted); cursor: pointer; }
-    .toggle input { accent-color: var(--accent); }
     .notice { color: var(--muted); font-style: italic; padding: 1rem; text-align: center; }
     .skeleton-pulse { width: 100%; height: 120px; background: var(--border); border-radius: 0.5rem; animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
@@ -93,15 +99,22 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
 })
 export class SubscribeImagesComponent implements OnInit {
   uploading = false;
+  currentUserId = signal<string>('');
 
-  constructor(readonly subService: SubscribeImageService) {}
+  constructor(
+    readonly subService: SubscribeImageService,
+    private readonly auth: AuthService,
+  ) {
+    const user = this.auth.getCurrentUser();
+    if (user) this.currentUserId.set(user.id);
+  }
 
   ngOnInit() {
     this.subService.load();
   }
 
-  toggle(img: any) {
-    this.subService.toggle(img);
+  isOwned(img: any): boolean {
+    return img.userId === this.currentUserId();
   }
 
   remove(img: any) {
