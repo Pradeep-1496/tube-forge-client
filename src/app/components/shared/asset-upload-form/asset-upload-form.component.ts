@@ -160,16 +160,61 @@ export class AssetUploadFormComponent {
     this.visibility.set(el.value as Visibility);
   }
 
-  private selectFile(file: File) {
+  private async selectFile(file: File) {
     this.selectedFile.set(file);
     const baseName = file.name.replace(/\.[^/.]+$/, '');
     this.name.set(baseName);
-    const lower = file.name.toLowerCase();
-    if (lower.includes('portrait')) {
-      this.type.set('portrait');
-    } else if (lower.includes('landscape')) {
-      this.type.set('landscape');
+
+    const detected = await this.detectOrientation(file);
+    if (detected) {
+      this.type.set(detected);
+    } else {
+      const lower = file.name.toLowerCase();
+      if (lower.includes('portrait')) {
+        this.type.set('portrait');
+      } else if (lower.includes('landscape')) {
+        this.type.set('landscape');
+      }
     }
+  }
+
+  private detectOrientation(file: File): Promise<'portrait' | 'landscape' | null> {
+    const accept = this.accept().toLowerCase();
+    if (accept.includes('image')) return this.detectImageOrientation(file);
+    if (accept.includes('video')) return this.detectVideoOrientation(file);
+    return Promise.resolve(null);
+  }
+
+  private detectImageOrientation(file: File): Promise<'portrait' | 'landscape' | null> {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve(img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape');
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      img.src = url;
+    });
+  }
+
+  private detectVideoOrientation(file: File): Promise<'portrait' | 'landscape' | null> {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+        resolve(video.videoHeight > video.videoWidth ? 'portrait' : 'landscape');
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      video.src = url;
+    });
   }
 
   clear() {
