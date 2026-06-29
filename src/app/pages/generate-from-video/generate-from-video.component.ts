@@ -8,6 +8,7 @@ import {
   BackgroundVideo,
   GenerateFromVideoResponse,
 } from '../../services/api.service';
+import { ToastService } from '../../services/toast.service';
 import {
   AppSelectComponent,
   SelectOption,
@@ -87,6 +88,9 @@ type ViewState = 'form' | 'generating' | 'result';
           </div>
 
           <div class="form-actions">
+            <button class="btn secondary" (click)="onSaveDraft()" [disabled]="savingDraft() || !canGenerate()">
+              {{ savingDraft() ? 'Saving...' : 'Save as Draft' }}
+            </button>
             <button class="btn primary" (click)="onGenerate()" [disabled]="!canGenerate()">
               Generate Video
             </button>
@@ -317,6 +321,18 @@ type ViewState = 'form' | 'generating' | 'result';
       .btn.primary:hover:not(:disabled) {
         filter: brightness(1.1);
       }
+      .btn.secondary {
+        background: transparent;
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .btn.secondary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn.secondary:hover:not(:disabled) {
+        background: var(--accent-weak);
+      }
       .btn.ghost {
         background: transparent;
         color: var(--text);
@@ -357,6 +373,7 @@ export class GenerateFromVideoComponent implements OnInit {
   selectedChannelId = '';
   publishDate = '';
 
+  savingDraft = signal(false);
   genProgress = signal(0);
   genStatus = signal('Preparing...');
   genError = signal<string | null>(null);
@@ -368,10 +385,12 @@ export class GenerateFromVideoComponent implements OnInit {
   contentItems: VideoContent[] = [];
 
   private readonly api: ApiService;
+  private readonly toast: ToastService;
 
-  constructor(api: ApiService, router: Router) {
+  constructor(api: ApiService, router: Router, toast: ToastService) {
     this.api = api;
     this.router = router;
+    this.toast = toast;
   }
 
   ngOnInit() {
@@ -461,6 +480,36 @@ export class GenerateFromVideoComponent implements OnInit {
           if (err.status) msg = `[${err.status}] ${msg}`;
           this.genError.set(msg);
           this.genStatus.set('Failed');
+        },
+      });
+  }
+
+  onSaveDraft() {
+    if (!this.canGenerate()) return;
+
+    this.savingDraft.set(true);
+    this.api
+      .createDraftFromVideo(this.selectedContentId, this.selectedBgVideoId, {
+        audioId: this.selectedAudioId || undefined,
+        theme: this.selectedTheme || undefined,
+        channelId: this.selectedChannelId,
+        publishedDate: this.publishDate || undefined,
+        subscribeImageId: this.selectedSubscribeId || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.savingDraft.set(false);
+          this.toast.show('Draft saved successfully', 'success');
+        },
+        error: (err) => {
+          this.savingDraft.set(false);
+          const body = err.error;
+          let msg = 'Failed to save draft';
+          if (typeof body === 'string') msg = body;
+          else if (body?.message) msg = body.message;
+          else if (err.message) msg = err.message;
+          if (err.status) msg = `[${err.status}] ${msg}`;
+          this.toast.show(msg, 'error');
         },
       });
   }

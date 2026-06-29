@@ -36,6 +36,10 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">▶</span>
           @if (!collapsed()) { <span>Create from Video</span> }
         </a>
+        <a routerLink="/drafts" routerLinkActive="active" class="nav-item">
+          <span class="icon">📝</span>
+          @if (!collapsed()) { <span>Drafts</span> }
+        </a>
         <a routerLink="/content" routerLinkActive="active" class="nav-item">
           <span class="icon">📄</span>
           @if (!collapsed()) { <span>Content</span> }

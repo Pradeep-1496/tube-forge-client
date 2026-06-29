@@ -282,6 +282,31 @@ export interface GenerateFromVideoResponse {
   };
 }
 
+export interface DraftVideo {
+  id: string;
+  contentId: string;
+  title?: string;
+  content?: string;
+  type?: string;
+  theme: string | null;
+  backgroundVideoId: string;
+  audioId: string | null;
+  subscribeImageId: string | null;
+  channelId: string;
+  publishedAt: string | null;
+  userId: string;
+  status: string;
+  visibility?: string;
+  outputVideoPath?: string | null;
+  thumbnailPath?: string | null;
+  file_name?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  backgroundId: string | null;
+  audio?: AudioAsset | null;
+  subscribeImage?: SubscribeImage | null;
+}
+
 export interface GenerateResult {
   success: boolean;
   videoPath?: string;
@@ -479,6 +504,31 @@ export class ApiService {
     const url = `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromVideo(videoContentId, backgroundVideoId)}`;
     console.debug('[ApiService] generateFromVideo', { url, payload });
     return this.http.post<GenerateFromVideoResponse>(url, payload);
+  }
+
+  createDraftFromVideo(
+    contentId: string,
+    backgroundVideoId: string,
+    payload: {
+      audioId?: string;
+      theme?: string;
+      subscribeImageId?: string;
+      channelId?: string;
+      publishedDate?: string;
+    } = {},
+  ) {
+    return this.http.post<DraftVideo>(
+      `${this.baseUrl}/api/draft-video/from-background/${contentId}/${backgroundVideoId}`,
+      payload,
+    );
+  }
+
+  getDraftVideos() {
+    return this.http.get<DraftVideo[]>(`${this.baseUrl}/api/draft-video`);
+  }
+
+  deleteDraftVideo(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}/api/draft-video/${id}`);
   }
 
   getThemes() {

@@ -13,6 +13,7 @@ import { AudiosComponent } from './pages/audios/audios.component';
 import { SubscribeImagesComponent } from './pages/subscribe-images/subscribe-images.component';
 import { GenerationDetailComponent } from './pages/generation/detail/generation-detail.component';
 import { GenerateFromVideoComponent } from './pages/generate-from-video/generate-from-video.component';
+import { DraftsComponent } from './pages/drafts/drafts.component';
 import { VideoMetadataComponent } from './pages/video-metadata/video-metadata.component';
 import { authGuard } from './guards/auth.guard';
 
@@ -36,6 +37,7 @@ export const routes: Routes = [
       { path: 'channels', component: ChannelsComponent },
       { path: 'settings', component: SettingsComponent },
       { path: 'generate-from-video', component: GenerateFromVideoComponent },
+      { path: 'drafts', component: DraftsComponent },
       { path: 'generation/:id', component: GenerationDetailComponent },
       { path: '**', redirectTo: 'dashboard' }
     ]
