@@ -342,13 +342,18 @@ export class CreateVideoComponent implements OnInit {
     this.api.getBackgroundAssets().subscribe({ next: (c) => this.backgrounds.set(c) });
   }
 
+  private toSingleLine(text: string): string {
+    return text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
   onSubmit() {
     if (this.form.invalid || this.submitting()) return;
     this.submitting.set(true);
-    const raw = this.form.getRawValue();
+    const raw = this.form.getRawValue() as Record<string, unknown>;
     const payload = {
       ...raw,
-      tags: ((raw.tags as string) || '')
+      content: this.toSingleLine((raw['content'] as string) || ''),
+      tags: ((raw['tags'] as string) || '')
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean) as string[],

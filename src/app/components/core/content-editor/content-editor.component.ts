@@ -25,10 +25,18 @@ import { VideoContent, Visibility } from '../../../services/api.service';
         <small class="char-count">{{ form.controls['content'].value?.length ?? 0 }} characters</small>
       </div>
       <div class="visibility-row">
-        <label class="toggle-label">
-          <input type="checkbox" formControlName="visibility" [checked]="form.controls['visibility'].value === 'public'" (change)="toggleVisibility()" />
+        <div class="toggle-wrapper">
+          <button
+            type="button"
+            class="toggle-switch"
+            [class.active]="form.controls['visibility'].value === 'public'"
+            (click)="toggleVisibility()"
+            [attr.aria-label]="form.controls['visibility'].value === 'public' ? 'Set private' : 'Set public'"
+          >
+            <span class="toggle-knob"></span>
+          </button>
           <span class="toggle-text">{{ form.controls['visibility'].value === 'public' ? 'Public' : 'Private' }}</span>
-        </label>
+        </div>
         <span class="visibility-hint">
           {{ form.controls['visibility'].value === 'public' ? 'Visible to all users' : 'Only visible to you' }}
         </span>
@@ -54,10 +62,13 @@ import { VideoContent, Visibility } from '../../../services/api.service';
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); }
     textarea { resize: vertical; min-height: 120px; }
     .char-count { text-align: right; font-size: 0.75rem; color: var(--muted); }
-    .visibility-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; }
-    .toggle-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.88rem; color: var(--text); }
-    .toggle-label input[type="checkbox"] { width: auto; accent-color: var(--accent); }
-    .toggle-text { font-weight: 600; }
+    .visibility-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.5rem 0; }
+    .toggle-wrapper { display: flex; align-items: center; gap: 0.7rem; }
+    .toggle-switch { position: relative; width: 2.6rem; height: 1.4rem; border-radius: 0.7rem; background: var(--border); border: none; cursor: pointer; padding: 0; transition: background 0.2s ease; flex-shrink: 0; }
+    .toggle-switch.active { background: var(--accent); }
+    .toggle-knob { position: absolute; top: 0.15rem; left: 0.15rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #fff; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+    .toggle-switch.active .toggle-knob { transform: translateX(1.2rem); }
+    .toggle-text { font-weight: 600; font-size: 0.88rem; color: var(--text); }
     .visibility-hint { font-size: 0.78rem; color: var(--muted); }
     .actions { display: flex; justify-content: flex-end; gap: 0.6rem; }
     .btn { padding: 0.55rem 1.2rem; border-radius: 0.55rem; font-weight: 600; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
@@ -99,8 +110,14 @@ export class ContentEditorComponent {
     );
   }
 
+  private toSingleLine(text: string): string {
+    return text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
   save() {
     if (this.form.invalid) return;
-    this.saved.emit(this.form.getRawValue());
+    const raw = this.form.getRawValue() as { title: string; content: string; visibility: Visibility };
+    raw.content = this.toSingleLine(raw.content);
+    this.saved.emit(raw);
   }
 }

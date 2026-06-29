@@ -1,9 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApiService, MetadataItem, UpdateMetadataDto } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 import { StatusBadgeComponent } from '../../components/shared/status-badge/status-badge.component';
 
 @Component({
@@ -17,8 +19,40 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
           <h1>Video Metadata</h1>
           <p>Browse all generated video records with preview playback.</p>
         </div>
-        <div class="header-count">{{ records().length }} video(s)</div>
+        <div class="header-count">{{ filteredRecords().length }} / {{ records().length }} video(s)</div>
       </header>
+
+      <div class="toolbar">
+        <div class="search-field">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search by title or description..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+          />
+        </div>
+        <div class="toolbar-filters">
+          <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)">
+            <option value="">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="failed">Failed</option>
+          </select>
+          <select [ngModel]="filterPrivacy()" (ngModelChange)="filterPrivacy.set($event)">
+            <option value="">All privacy</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+            <option value="unlisted">Unlisted</option>
+          </select>
+          <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="title">By title A-Z</option>
+          </select>
+        </div>
+      </div>
 
       @if (loading()) {
         <div class="loading">Loading metadata...</div>
@@ -30,57 +64,57 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
           <p>No video metadata records found yet.</p>
           <a routerLink="/create" class="btn primary">Create your first video</a>
         </div>
+      } @else if (filteredRecords().length === 0) {
+        <div class="empty">
+          <span class="empty-icon">🔍</span>
+          <p>No records match your search or filters.</p>
+          <button class="btn ghost" (click)="clearFilters()">Clear filters</button>
+        </div>
       } @else {
-        <div class="card-grid">
-          @for (item of records(); track item.id) {
-            @if (editing()?.id === item.id) {
-              <div class="card editor" [formGroup]="form">
-                <h3>Edit Metadata</h3>
+        <div class="table-wrap">
+          @if (editing(); as editItem) {
+            <div class="editor" [formGroup]="form">
+              <h3>Edit Metadata</h3>
+              <div class="editor-grid">
                 <div class="field">
                   <label>Title</label>
                   <input formControlName="title" />
                 </div>
                 <div class="field">
                   <label>Description</label>
-                  <textarea formControlName="description" rows="3"></textarea>
+                  <textarea formControlName="description" rows="2"></textarea>
                 </div>
-                <div class="row">
-                  <div class="field">
-                    <label>Tags (comma-separated)</label>
-                    <input formControlName="tags" />
-                  </div>
-                  <div class="field">
-                    <label>Category ID</label>
-                    <input formControlName="category_id" />
-                  </div>
+                <div class="field">
+                  <label>Tags (comma-separated)</label>
+                  <input formControlName="tags" />
                 </div>
-                <div class="row">
-                  <div class="field">
-                    <label>Language</label>
-                    <input formControlName="default_language" />
-                  </div>
-                  <div class="field">
-                    <label>Privacy</label>
-                    <select formControlName="privacy_status">
-                      <option value="public">Public</option>
-                      <option value="private">Private</option>
-                      <option value="unlisted">Unlisted</option>
-                    </select>
-                  </div>
+                <div class="field">
+                  <label>Category ID</label>
+                  <input formControlName="category_id" />
                 </div>
-                <div class="row">
-                  <div class="field">
-                    <label>Status</label>
-                    <select formControlName="status">
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                      <option value="scheduled">Scheduled</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>Publish At</label>
-                    <input type="datetime-local" formControlName="publish_at" />
-                  </div>
+                <div class="field">
+                  <label>Language</label>
+                  <input formControlName="default_language" />
+                </div>
+                <div class="field">
+                  <label>Privacy</label>
+                  <select formControlName="privacy_status">
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                    <option value="unlisted">Unlisted</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Status</label>
+                  <select formControlName="status">
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="scheduled">Scheduled</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Publish At</label>
+                  <input type="datetime-local" formControlName="publish_at" />
                 </div>
                 <div class="field checkbox">
                   <label>
@@ -88,131 +122,194 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
                     Made for kids
                   </label>
                 </div>
-                <div class="actions">
-                  <button type="button" class="btn ghost" (click)="cancelEdit()">Cancel</button>
-                  <button type="button" class="btn primary" (click)="save()">Save</button>
-                </div>
               </div>
-            } @else {
-              <div class="card">
-                <div class="video-wrap">
-                  <video controls preload="metadata" class="video-player">
-                    <source [src]="videoUrl(item)" type="video/mp4" />
-                  </video>
-                </div>
-                <div class="card-body">
-                  <div class="card-header">
-                    <h2 class="title">{{ item.title }}</h2>
-                    <app-status-badge [status]="item.status" />
-                  </div>
-                  <p class="description">{{ item.description }}</p>
-                  @if (item.tags.length) {
-                    <div class="tags">
-                      @for (tag of item.tags; track tag) {
-                        <span class="tag">{{ tag }}</span>
+              <div class="actions">
+                <button type="button" class="btn ghost" (click)="cancelEdit()">Cancel</button>
+                <button type="button" class="btn primary" (click)="save()">Save</button>
+              </div>
+            </div>
+          }
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="col-thumb"></th>
+                <th class="col-title">Title</th>
+                <th class="col-status">Status</th>
+                <th class="col-privacy">Privacy</th>
+                <th class="col-lang">Lang</th>
+                <th class="col-date">Created</th>
+                <th class="col-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of filteredRecords(); track item.id) {
+                <tr>
+                  <td class="col-thumb">
+                    <div class="thumb" (click)="openView(item)">
+                      <video preload="metadata" muted>
+                        <source [src]="videoUrl(item)" type="video/mp4" />
+                      </video>
+                      <span class="thumb-play">▶</span>
+                    </div>
+                  </td>
+                  <td class="col-title">
+                    <span class="cell-title">{{ item.title }}</span>
+                  </td>
+                  <td class="col-status"><app-status-badge [status]="item.status" /></td>
+                  <td class="col-privacy"><span class="privacy-tag" [class.public]="item.privacy_status === 'public'">{{ item.privacy_status }}</span></td>
+                  <td class="col-lang">{{ item.default_language | uppercase }}</td>
+                  <td class="col-date">{{ item.createdAt | date:'short' }}</td>
+                  <td class="col-actions">
+                    <div class="row-actions">
+                      <button class="btn row-btn" (click)="openView(item)" title="View">👁</button>
+                      @if (isOwned(item)) {
+                        <button class="btn row-btn" (click)="startEdit(item)" title="Edit">✎</button>
+                        <button class="btn row-btn danger" (click)="remove(item)" title="Delete">✕</button>
+                      }
+                      @if (item.youtubeUrl) {
+                        <a class="btn row-btn" [href]="item.youtubeUrl" target="_blank" rel="noopener noreferrer" title="Open on YouTube">▶</a>
                       }
                     </div>
-                  }
-                  <div class="meta-grid">
-                    <div class="meta-item">
-                      <span class="label">Language</span>
-                      <span class="value">{{ item.default_language | uppercase }}</span>
-                    </div>
-                    <div class="meta-item">
-                      <span class="label">Privacy</span>
-                      <span class="value">{{ item.privacy_status }}</span>
-                    </div>
-                    <div class="meta-item">
-                      <span class="label">Category</span>
-                      <span class="value">{{ item.category_id }}</span>
-                    </div>
-                    <div class="meta-item">
-                      <span class="label">Kids</span>
-                      <span class="value">{{ item.self_declared_made_for_kids ? 'Yes' : 'No' }}</span>
-                    </div>
-                    @if (item.youtubeVideoId) {
-                      <div class="meta-item">
-                        <span class="label">YouTube</span>
-                        <span class="value">Published</span>
-                      </div>
-                    }
-                    <div class="meta-item">
-                      <span class="label">Created</span>
-                      <span class="value">{{ item.createdAt | date:'medium' }}</span>
-                    </div>
-                    @if (item.publish_at) {
-                      <div class="meta-item">
-                        <span class="label">Publish at</span>
-                        <span class="value">{{ item.publish_at | date:'medium' }}</span>
-                      </div>
-                    }
-                  </div>
-                </div>
-                <div class="card-footer">
-                  @if (item.youtubeUrl) {
-                    <a class="btn ghost" [href]="item.youtubeUrl" target="_blank" rel="noopener noreferrer">
-                      View on YouTube
-                    </a>
-                  }
-                  @if (isOwned(item)) {
-                    <button class="btn ghost" (click)="startEdit(item)">Edit</button>
-                    <button class="btn ghost danger" (click)="remove(item)">Delete</button>
-                  }
-                </div>
-              </div>
-            }
-          }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
     </div>
+
+    @if (viewingItem(); as item) {
+      <div class="modal-overlay" (click)="closeView()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>{{ item.title }}</h2>
+            <button class="modal-close" (click)="closeView()">&times;</button>
+          </div>
+          <div class="modal-video-wrap">
+            <video controls autoplay class="modal-video">
+              <source [src]="videoUrl(item)" type="video/mp4" />
+            </video>
+          </div>
+          <div class="modal-body">
+            <p class="modal-desc">{{ item.description }}</p>
+            <div class="modal-meta">
+              <span><strong>Status:</strong> {{ item.status }}</span>
+              <span><strong>Privacy:</strong> {{ item.privacy_status }}</span>
+              <span><strong>Language:</strong> {{ item.default_language }}</span>
+              <span><strong>Category:</strong> {{ item.category_id }}</span>
+              @if (item.publish_at) {
+                <span><strong>Publish:</strong> {{ item.publish_at | date:'medium' }}</span>
+              }
+              <span><strong>Created:</strong> {{ item.createdAt | date:'medium' }}</span>
+            </div>
+            @if (item.tags.length) {
+              <div class="modal-tags">
+                @for (tag of item.tags; track tag) {
+                  <span class="tag">{{ tag }}</span>
+                }
+              </div>
+            }
+            @if (item.youtubeUrl) {
+              <a class="btn primary" [href]="item.youtubeUrl" target="_blank" rel="noopener noreferrer">
+                View on YouTube
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
-    .page { display: flex; flex-direction: column; gap: 1.6rem; }
-    .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; }
-    .page-header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text); margin: 0; }
-    .page-header p { color: var(--muted); margin: 0.25rem 0 0; font-size: 0.92rem; }
-    .header-count { font-size: 0.82rem; color: var(--muted); background: var(--border-subtle); border: 1px solid var(--border); border-radius: 9999px; padding: 0.35rem 0.9rem; white-space: nowrap; }
-    .loading { color: var(--muted); font-style: italic; padding: 2rem; }
-    .error { color: var(--danger); padding: 1rem; background: rgba(239,68,68,0.1); border-radius: 0.5rem; }
-    .empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 4rem 2rem; color: var(--muted); text-align: center; }
-    .empty-icon { font-size: 2.5rem; }
-    .empty p { margin: 0; font-style: italic; }
-    .card-grid { columns: 2; column-gap: 1.2rem; }
-    @media (max-width: 860px) { .card-grid { columns: 1; } }
-    @media (min-width: 1400px) { .card-grid { columns: 3; } }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; transition: border-color 0.2s ease; break-inside: avoid; margin-bottom: 1.2rem; }
-    .card:hover { border-color: var(--accent); }
-    .video-wrap { background: #000; position: relative; }
-    .video-player { width: 100%; display: block; outline: none; }
-    .card-body { padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 0.8rem; }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-    .title { font-size: 1.1rem; font-weight: 600; color: var(--text); margin: 0; line-height: 1.35; }
-    .description { font-size: 0.88rem; color: var(--muted); line-height: 1.55; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-    .tag { background: var(--accent-weak); color: var(--accent); font-size: 0.75rem; font-weight: 500; padding: 0.2rem 0.6rem; border-radius: 9999px; border: 1px solid rgba(99,102,241,0.2); }
-    .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.5rem; padding-top: 0.2rem; border-top: 1px solid var(--border-subtle); }
-    .meta-item { display: flex; flex-direction: column; gap: 0.1rem; }
-    .label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; }
-    .value { font-size: 0.84rem; color: var(--text); }
-    .card-footer { padding: 0.8rem 1.4rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .btn { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 0.55rem; font-weight: 600; font-size: 0.84rem; cursor: pointer; border: 1px solid transparent; text-decoration: none; transition: all 0.15s ease; }
+    .page { display: flex; flex-direction: column; gap: 1rem; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+    .page-header h1 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin: 0; }
+    .page-header p { color: var(--muted); margin: 0.2rem 0 0; font-size: 0.85rem; }
+    .header-count { font-size: 0.78rem; color: var(--muted); background: var(--border-subtle); border: 1px solid var(--border); border-radius: 9999px; padding: 0.3rem 0.8rem; white-space: nowrap; }
+
+    .toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+    .search-field { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 200px; background: var(--border-subtle); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0 0.65rem; }
+    .search-field input { flex: 1; background: transparent; border: none; color: var(--text); padding: 0.5rem 0; font-size: 0.84rem; outline: none; font-family: inherit; }
+    .search-icon { font-size: 0.85rem; }
+    .toolbar-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .toolbar-filters select { background: var(--border-subtle); border: 1px solid var(--border); color: var(--text); padding: 0.45rem 0.6rem; border-radius: 0.45rem; font-size: 0.8rem; outline: none; font-family: inherit; cursor: pointer; }
+
+    .loading { color: var(--muted); font-style: italic; padding: 2rem; font-size: 0.9rem; }
+    .error { color: var(--danger); padding: 0.8rem 1rem; background: rgba(239,68,68,0.1); border-radius: 0.5rem; font-size: 0.85rem; }
+    .empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 3rem 2rem; color: var(--muted); text-align: center; }
+    .empty-icon { font-size: 2rem; }
+    .empty p { margin: 0; font-style: italic; font-size: 0.88rem; }
+
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 0.75rem; overflow: hidden; }
+    .table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .table thead { background: var(--border-subtle); }
+    .table th { text-align: left; padding: 0.55rem 0.7rem; font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .table td { padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+    .table tbody tr:hover { background: var(--accent-weak); }
+    .table tbody tr:last-child td { border-bottom: none; }
+
+    .col-thumb { width: 60px; }
+    .col-title { min-width: 160px; }
+    .col-status { width: 95px; }
+    .col-privacy { width: 80px; }
+    .col-lang { width: 55px; }
+    .col-date { width: 130px; white-space: nowrap; }
+    .col-actions { width: 110px; }
+
+    .thumb { width: 50px; height: 36px; border-radius: 0.35rem; overflow: hidden; position: relative; cursor: pointer; background: #000; flex-shrink: 0; }
+    .thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.25); opacity: 0; transition: opacity 0.15s; }
+    .thumb:hover .thumb-play { opacity: 1; }
+
+    .cell-title { color: var(--text); font-weight: 600; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .privacy-tag { font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 9999px; background: var(--border-subtle); border: 1px solid var(--border); text-transform: capitalize; }
+    .privacy-tag.public { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--success); }
+
+    .row-actions { display: flex; gap: 0.15rem; }
+    .row-btn { display: inline-flex; align-items: center; justify-content: center; width: 1.8rem; height: 1.8rem; border-radius: 0.35rem; background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; cursor: pointer; text-decoration: none; transition: all 0.12s ease; }
+    .row-btn:hover { background: var(--border-subtle); color: var(--text); }
+    .row-btn.danger:hover { background: rgba(239,68,68,0.12); color: var(--danger); border-color: var(--danger); }
+
+    .btn { display: inline-flex; align-items: center; padding: 0.4rem 0.85rem; border-radius: 0.45rem; font-weight: 600; font-size: 0.8rem; cursor: pointer; border: 1px solid transparent; text-decoration: none; transition: all 0.12s ease; }
     .btn.primary { background: var(--accent); color: #fff; }
     .btn.primary:hover { filter: brightness(1.1); }
     .btn.ghost { background: transparent; color: var(--text); border-color: var(--border); }
     .btn.ghost:hover:not(:disabled) { background: var(--border-subtle); }
-    .btn.ghost.danger { color: var(--danger); border-color: var(--danger); }
-    .btn.ghost.danger:hover { background: rgba(239,68,68,0.15); }
 
-    .editor { padding: 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
-    .editor h3 { margin: 0 0 0.25rem; color: var(--text); font-size: 1.1rem; }
-    .editor input, .editor textarea, .editor select { width: 100%; background: var(--border-subtle); border: 1px solid var(--border); color: var(--text); padding: 0.55rem 0.85rem; border-radius: 0.55rem; font-size: 0.88rem; box-sizing: border-box; }
-    .editor textarea { resize: vertical; font-family: inherit; }
-    .field { display: flex; flex-direction: column; gap: 0.3rem; }
-    .field label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
-    .checkbox label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; text-transform: none; font-size: 0.85rem; color: var(--text); }
+    .editor { padding: 1rem 1.2rem; background: var(--border-subtle); border-bottom: 1px solid var(--border); }
+    .editor h3 { margin: 0 0 0.6rem; color: var(--text); font-size: 1rem; }
+    .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1rem; }
+    .editor input, .editor textarea, .editor select { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.4rem 0.65rem; border-radius: 0.4rem; font-size: 0.82rem; box-sizing: border-box; font-family: inherit; }
+    .editor textarea { resize: vertical; min-height: 2.4rem; }
+    .field { display: flex; flex-direction: column; gap: 0.2rem; }
+    .field label { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    .checkbox label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; text-transform: none; font-size: 0.82rem; color: var(--text); }
     .checkbox input { width: auto; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .actions { display: flex; justify-content: flex-end; gap: 0.6rem; }
+    .actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
+
+    .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; padding: 1.5rem; animation: fadeIn 0.15s ease; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 0.9rem; max-width: 720px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; animation: scaleIn 0.15s ease; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--border-subtle); }
+    .modal-header h2 { margin: 0; font-size: 1.05rem; color: var(--text); }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; padding: 0; }
+    .modal-close:hover { color: var(--text); }
+    .modal-video-wrap { background: #000; }
+    .modal-video { width: 100%; display: block; max-height: 440px; }
+    .modal-body { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+    .modal-desc { margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.45; }
+    .modal-meta { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.8rem; color: var(--muted); }
+    .modal-meta strong { color: var(--text); }
+    .modal-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .tag { background: var(--accent-weak); color: var(--accent); font-size: 0.72rem; font-weight: 500; padding: 0.15rem 0.5rem; border-radius: 9999px; border: 1px solid rgba(99,102,241,0.2); }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    @media (max-width: 700px) {
+      .col-lang, .col-date { display: none; }
+      .editor-grid { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class VideoMetadataComponent implements OnInit {
@@ -225,10 +322,51 @@ export class VideoMetadataComponent implements OnInit {
 
   currentUserId = signal<string>('');
 
+  searchQuery = signal('');
+  filterStatus = signal('');
+  filterPrivacy = signal('');
+  sortBy = signal('newest');
+  viewingItem = signal<MetadataItem | null>(null);
+
+  filteredRecords = computed(() => {
+    let list = this.records();
+
+    const query = this.searchQuery().toLowerCase().trim();
+    if (query) {
+      list = list.filter(
+        (r) =>
+          r.title.toLowerCase().includes(query) ||
+          r.description.toLowerCase().includes(query),
+      );
+    }
+
+    const status = this.filterStatus();
+    if (status) {
+      list = list.filter((r) => r.status === status);
+    }
+
+    const privacy = this.filterPrivacy();
+    if (privacy) {
+      list = list.filter((r) => r.privacy_status === privacy);
+    }
+
+    const sort = this.sortBy();
+    if (sort === 'newest') {
+      list = [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (sort === 'oldest') {
+      list = [...list].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } else if (sort === 'title') {
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    return list;
+  });
+
   constructor(
     private readonly api: ApiService,
     private readonly fb: FormBuilder,
     private readonly auth: AuthService,
+    private readonly toast: ToastService,
   ) {
     const user = this.auth.getCurrentUser();
     if (user) this.currentUserId.set(user.id);
@@ -264,8 +402,23 @@ export class VideoMetadataComponent implements OnInit {
     });
   }
 
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.filterStatus.set('');
+    this.filterPrivacy.set('');
+    this.sortBy.set('newest');
+  }
+
   videoUrl(item: MetadataItem): string {
     return this.api.toVideoUrl(item.output_video_path);
+  }
+
+  openView(item: MetadataItem): void {
+    this.viewingItem.set(item);
+  }
+
+  closeView(): void {
+    this.viewingItem.set(null);
   }
 
   startEdit(item: MetadataItem): void {
@@ -296,8 +449,11 @@ export class VideoMetadataComponent implements OnInit {
     this.api.deleteMetadataItem(item.id).subscribe({
       next: () => {
         this.records.update((list) => list.filter((r) => r.id !== item.id));
+        this.toast.show(`Deleted "${item.title}"`, 'success');
       },
-      error: (err) => console.error('Failed to delete metadata', err),
+      error: (err) => {
+        this.toast.show(err?.error?.message || 'Failed to delete', 'error');
+      },
     });
   }
 
@@ -323,9 +479,10 @@ export class VideoMetadataComponent implements OnInit {
         this.records.update((list) => list.map((r) => (r.id === updated.id ? updated : r)));
         this.editing.set(null);
         this.saving.set(false);
+        this.toast.show('Metadata updated', 'success');
       },
       error: (err) => {
-        console.error('Failed to update metadata', err);
+        this.toast.show(err?.error?.message || 'Failed to update', 'error');
         this.saving.set(false);
       },
     });

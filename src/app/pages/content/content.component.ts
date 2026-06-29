@@ -63,10 +63,18 @@ import { AuthService } from '../../services/auth.service';
           </div>
           <div class="field visibility-field">
             <label>Visibility</label>
-            <label class="toggle-label">
-              <input type="checkbox" [checked]="form.controls['visibility'].value === 'public'" (change)="toggleVisibility()" />
+            <div class="toggle-wrapper">
+              <button
+                type="button"
+                class="toggle-switch"
+                [class.active]="form.controls['visibility'].value === 'public'"
+                (click)="toggleVisibility()"
+                [attr.aria-label]="form.controls['visibility'].value === 'public' ? 'Set private' : 'Set public'"
+              >
+                <span class="toggle-knob"></span>
+              </button>
               <span class="toggle-text">{{ form.controls['visibility'].value === 'public' ? 'Public' : 'Private' }}</span>
-            </label>
+            </div>
             <span class="visibility-hint">{{ form.controls['visibility'].value === 'public' ? 'Visible to all users' : 'Only visible to you' }}</span>
           </div>
           </div>
@@ -218,28 +226,50 @@ import { AuthService } from '../../services/auth.service';
       .visibility-field {
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
+        gap: 0.5rem;
       }
-      .toggle-label {
+      .toggle-wrapper {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        font-size: 0.88rem;
-        color: var(--text);
-        font-weight: 500;
+        gap: 0.7rem;
       }
-      .toggle-label input[type="checkbox"] {
-        width: auto;
-        accent-color: var(--accent);
+      .toggle-switch {
+        position: relative;
+        width: 2.6rem;
+        height: 1.4rem;
+        border-radius: 0.7rem;
+        background: var(--border);
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        transition: background 0.2s ease;
+        flex-shrink: 0;
+      }
+      .toggle-switch.active {
+        background: var(--accent);
+      }
+      .toggle-knob {
+        position: absolute;
+        top: 0.15rem;
+        left: 0.15rem;
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      }
+      .toggle-switch.active .toggle-knob {
+        transform: translateX(1.2rem);
       }
       .toggle-text {
         font-weight: 600;
+        font-size: 0.88rem;
+        color: var(--text);
       }
       .visibility-hint {
         font-size: 0.78rem;
         color: var(--muted);
-        margin-top: 0.1rem;
       }
       .actions {
         display: flex;
@@ -329,9 +359,14 @@ export class ContentComponent implements OnInit {
     });
   }
 
+  private toSingleLine(text: string): string {
+    return text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
   save() {
     if (this.form.invalid) return;
-    const payload = this.form.getRawValue();
+    const payload = this.form.getRawValue() as { title: string; content: string; type: string; visibility: Visibility };
+    payload.content = this.toSingleLine(payload.content);
     const current = this.editing()!;
     if (current.id) {
       this.api.updateContentItem(current.id, payload as any).subscribe({
