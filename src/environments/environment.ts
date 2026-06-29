@@ -55,6 +55,8 @@ export const environment = {
       create: '/api/metadata',
       findAll: '/api/metadata',
       findOne: (id: string) => `/api/metadata/${id}`,
+      update: (id: string) => `/api/metadata/${id}`,
+      remove: (id: string) => `/api/metadata/${id}`,
     },
     subscribeImages: {
       upload: '/api/subscribe-images/upload',

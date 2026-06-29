@@ -32,10 +32,12 @@ import { AuthService } from '../../services/auth.service';
                 <span class="owned">Owned</span>
               }
             </div>
-            <div class="actions">
-              <button class="btn sm ghost" (click)="startEdit(item)">Edit</button>
-              <button class="btn sm danger ghost" (click)="remove(item)">Delete</button>
-            </div>
+            @if (isOwned(item)) {
+              <div class="actions">
+                <button class="btn sm ghost" (click)="startEdit(item)">Edit</button>
+                <button class="btn sm danger ghost" (click)="remove(item)">Delete</button>
+              </div>
+            }
           </article>
         }
         @if (!items().length) {

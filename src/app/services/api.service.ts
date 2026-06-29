@@ -149,6 +149,18 @@ export interface ContentItem {
   updatedAt?: string;
 }
 
+export interface UpdateMetadataDto {
+  title?: string;
+  description?: string;
+  tags?: string[];
+  category_id?: string;
+  default_language?: string;
+  privacy_status?: string;
+  status?: string;
+  publish_at?: string;
+  self_declared_made_for_kids?: boolean;
+}
+
 export interface MetadataItem {
   id: string;
   title: string;
@@ -606,6 +618,19 @@ export class ApiService {
     return this.http.post<MetadataItem>(
       `${this.baseUrl}${environment.apiEndpoints.metadata.create}`,
       payload,
+    );
+  }
+
+  updateMetadataItem(id: string, payload: UpdateMetadataDto) {
+    return this.http.put<MetadataItem>(
+      `${this.baseUrl}${environment.apiEndpoints.metadata.update(id)}`,
+      payload,
+    );
+  }
+
+  deleteMetadataItem(id: string) {
+    return this.http.delete<{ message: string }>(
+      `${this.baseUrl}${environment.apiEndpoints.metadata.remove(id)}`,
     );
   }
 
