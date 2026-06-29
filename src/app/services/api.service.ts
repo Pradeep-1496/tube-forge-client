@@ -282,12 +282,21 @@ export interface GenerateFromVideoResponse {
   };
 }
 
+export interface DraftVideoContent {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  userId: string;
+  visibility: Visibility;
+  createdAt: string;
+  updatedAt: string;
+  user?: { name: string };
+}
+
 export interface DraftVideo {
   id: string;
   contentId: string;
-  title?: string;
-  content?: string;
-  type?: string;
   theme: string | null;
   backgroundVideoId: string;
   audioId: string | null;
@@ -305,6 +314,7 @@ export interface DraftVideo {
   backgroundId: string | null;
   audio?: AudioAsset | null;
   subscribeImage?: SubscribeImage | null;
+  content?: DraftVideoContent | null;
 }
 
 export interface GenerateResult {
@@ -466,10 +476,16 @@ export class ApiService {
     );
   }
 
-  generateVideo(id: string) {
+  generateVideo(
+    id: string,
+    payload?: {
+      channelId?: string;
+      publishedDate?: string;
+    },
+  ) {
     return this.http.post<GenerateResult>(
       `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generate(id)}`,
-      {},
+      payload ?? {},
     );
   }
 
@@ -488,10 +504,10 @@ export class ApiService {
     payload: {
       audioId?: string;
       theme?: string;
-      channelId?: string;
+      channelId: string;
       publishedDate?: string;
       subscribeImageId?: string;
-    } = {},
+    },
   ) {
     if (!backgroundVideoId) {
       console.error('[ApiService] generateFromVideo called with missing backgroundVideoId', {
@@ -513,9 +529,9 @@ export class ApiService {
       audioId?: string;
       theme?: string;
       subscribeImageId?: string;
-      channelId?: string;
+      channelId: string;
       publishedDate?: string;
-    } = {},
+    },
   ) {
     return this.http.post<DraftVideo>(
       `${this.baseUrl}/api/draft-video/from-background/${contentId}/${backgroundVideoId}`,
@@ -525,6 +541,24 @@ export class ApiService {
 
   getDraftVideos() {
     return this.http.get<DraftVideo[]>(`${this.baseUrl}/api/draft-video`);
+  }
+
+  getDraftVideo(id: string) {
+    return this.http.get<DraftVideo>(`${this.baseUrl}/api/draft-video/${id}`);
+  }
+
+  updateDraftVideo(
+    id: string,
+    payload: {
+      theme?: string;
+      backgroundId?: string;
+      audioId?: string;
+      subscribeImageId?: string;
+      channelId?: string;
+      publishedDate?: string;
+    },
+  ) {
+    return this.http.put<DraftVideo>(`${this.baseUrl}/api/draft-video/${id}`, payload);
   }
 
   deleteDraftVideo(id: string) {

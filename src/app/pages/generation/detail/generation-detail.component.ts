@@ -69,11 +69,34 @@ export class GenerationDetailComponent implements OnInit {
       this.error.set('No generation ID provided');
       return;
     }
-    this.startGeneration();
+    this.api.getMetadataItem(this.generationId).subscribe({
+      next: (item) => {
+        if (item.output_video_path) {
+          this.progress.set(100);
+          this.statusText.set('Generation complete!');
+          this.done.set(true);
+          this.videoUrl.set(this.api.toVideoUrl(item.output_video_path));
+          this.metadata.set({
+            title: item.title,
+            status: item.status,
+            createdAt: item.createdAt,
+          });
+          setTimeout(() => this.view.set('result'), 500);
+        } else {
+          this.generateVideo({
+            channelId: item.channelId || undefined,
+            publishedDate: item.publish_at || undefined,
+          });
+        }
+      },
+      error: () => {
+        this.generateVideo();
+      },
+    });
   }
 
-  private startGeneration() {
-    this.api.generateVideo(this.generationId).subscribe({
+  private generateVideo(payload?: { channelId?: string; publishedDate?: string }) {
+    this.api.generateVideo(this.generationId, payload).subscribe({
       next: (res: any) => {
         this.progress.set(100);
         this.statusText.set('Generation complete!');
@@ -99,7 +122,7 @@ export class GenerationDetailComponent implements OnInit {
     this.done.set(false);
     this.progress.set(0);
     this.statusText.set('Restarting...');
-    this.startGeneration();
+    this.generateVideo();
   }
 
   goBack() {

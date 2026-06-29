@@ -175,7 +175,7 @@ export class VideoContentDetailComponent implements OnInit {
       this.api.generateFromVideo(req.videoContentId, req.backgroundVideoId, {
         audioId: req.audioId || undefined,
         theme: req.theme || undefined,
-        channelId: req.channelId || undefined,
+        channelId: req.channelId,
         publishedDate: req.publishedDate || undefined,
         subscribeImageId: req.subscribeImageId || undefined,
       }).subscribe({

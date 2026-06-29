@@ -14,6 +14,7 @@ import { SubscribeImagesComponent } from './pages/subscribe-images/subscribe-ima
 import { GenerationDetailComponent } from './pages/generation/detail/generation-detail.component';
 import { GenerateFromVideoComponent } from './pages/generate-from-video/generate-from-video.component';
 import { DraftsComponent } from './pages/drafts/drafts.component';
+import { DraftEditComponent } from './pages/draft-edit/draft-edit.component';
 import { VideoMetadataComponent } from './pages/video-metadata/video-metadata.component';
 import { authGuard } from './guards/auth.guard';
 
@@ -38,6 +39,7 @@ export const routes: Routes = [
       { path: 'settings', component: SettingsComponent },
       { path: 'generate-from-video', component: GenerateFromVideoComponent },
       { path: 'drafts', component: DraftsComponent },
+      { path: 'draft/edit/:id', component: DraftEditComponent },
       { path: 'generation/:id', component: GenerationDetailComponent },
       { path: '**', redirectTo: 'dashboard' }
     ]
