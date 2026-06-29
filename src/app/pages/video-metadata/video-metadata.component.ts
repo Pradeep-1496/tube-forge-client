@@ -1,9 +1,9 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ApiService, MetadataItem, UpdateMetadataDto } from '../../services/api.service';
+import { ApiService, MetadataItem, UpdateMetadataDto, DraftVideo } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { StatusBadgeComponent } from '../../components/shared/status-badge/status-badge.component';
@@ -176,50 +176,181 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
             </tbody>
           </table>
         </div>
-      }
-    </div>
+       }
+     </div>
 
-    @if (viewingItem(); as item) {
-      <div class="modal-overlay" (click)="closeView()">
-        <div class="modal" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h2>{{ item.title }}</h2>
-            <button class="modal-close" (click)="closeView()">&times;</button>
-          </div>
-          <div class="modal-video-wrap">
-            <video controls autoplay class="modal-video">
-              <source [src]="videoUrl(item)" type="video/mp4" />
-            </video>
-          </div>
-          <div class="modal-body">
-            <p class="modal-desc">{{ item.description }}</p>
-            <div class="modal-meta">
-              <span><strong>Status:</strong> {{ item.status }}</span>
-              <span><strong>Privacy:</strong> {{ item.privacy_status }}</span>
-              <span><strong>Language:</strong> {{ item.default_language }}</span>
-              <span><strong>Category:</strong> {{ item.category_id }}</span>
-              @if (item.publish_at) {
-                <span><strong>Publish:</strong> {{ item.publish_at | date:'medium' }}</span>
-              }
-              <span><strong>Created:</strong> {{ item.createdAt | date:'medium' }}</span>
-            </div>
-            @if (item.tags.length) {
-              <div class="modal-tags">
-                @for (tag of item.tags; track tag) {
-                  <span class="tag">{{ tag }}</span>
-                }
-              </div>
-            }
-            @if (item.youtubeUrl) {
-              <a class="btn primary" [href]="item.youtubeUrl" target="_blank" rel="noopener noreferrer">
-                View on YouTube
-              </a>
-            }
-          </div>
-        </div>
-      </div>
-    }
-  `,
+     <div class="drafts-section">
+       <div class="section-header">
+         <h2>Drafts</h2>
+       </div>
+       @if (draftsLoading()) {
+         <div class="loading">Loading drafts...</div>
+       } @else if (draftsError()) {
+         <div class="error">{{ draftsError() }}</div>
+       } @else if (drafts().length === 0) {
+         <div class="empty small">
+           <span class="empty-icon">📝</span>
+           <p>No draft videos found.</p>
+           <a routerLink="/generate-from-video" class="btn primary">Create from Video</a>
+         </div>
+       } @else {
+         <div class="table-wrap">
+           <table class="table">
+             <thead>
+               <tr>
+                 <th class="col-title">Title</th>
+                 <th class="col-theme">Theme</th>
+                 <th class="col-audio">Audio</th>
+                 <th class="col-status">Status</th>
+                 <th class="col-date">Created</th>
+                 <th class="col-actions">Actions</th>
+               </tr>
+             </thead>
+             <tbody>
+               @for (draft of drafts(); track draft.id) {
+                 <tr>
+                   <td class="col-title">
+                     <span class="cell-title">{{ draft.content?.title || 'Untitled' }}</span>
+                   </td>
+                   <td class="col-theme">
+                     <span class="theme-tag">{{ draft.theme || '—' }}</span>
+                   </td>
+                   <td class="col-audio">
+                     <span class="cell-audio">{{ draft.audio?.name || '—' }}</span>
+                   </td>
+                   <td class="col-status">{{ draft.status }}</td>
+                   <td class="col-date">{{ draft.createdAt | date: 'short' }}</td>
+                   <td class="col-actions">
+                     <div class="row-actions">
+                       <button class="btn row-btn" (click)="viewDraft(draft)" title="View">👁</button>
+                       <a class="btn row-btn edit" [routerLink]="['/draft/edit', draft.id]" title="Edit">✎</a>
+                       <button class="btn row-btn generate" (click)="generateFromDraft(draft)" [disabled]="generatingDraftId() === draft.id" title="Generate video">
+                         {{ generatingDraftId() === draft.id ? '...' : '▶' }}
+                       </button>
+                       <button class="btn row-btn danger" (click)="deleteDraft(draft)" title="Delete">✕</button>
+                     </div>
+                   </td>
+                 </tr>
+               }
+             </tbody>
+           </table>
+         </div>
+       }
+     </div>
+
+     @if (viewingItem(); as item) {
+       <div class="modal-overlay" (click)="closeView()">
+         <div class="modal" (click)="$event.stopPropagation()">
+           <div class="modal-header">
+             <h2>{{ item.title }}</h2>
+             <button class="modal-close" (click)="closeView()">&times;</button>
+           </div>
+           <div class="modal-video-wrap">
+             <video controls autoplay class="modal-video">
+               <source [src]="videoUrl(item)" type="video/mp4" />
+             </video>
+           </div>
+           <div class="modal-body">
+             <p class="modal-desc">{{ item.description }}</p>
+             <div class="modal-meta">
+               <span><strong>Status:</strong> {{ item.status }}</span>
+               <span><strong>Privacy:</strong> {{ item.privacy_status }}</span>
+               <span><strong>Language:</strong> {{ item.default_language }}</span>
+               <span><strong>Category:</strong> {{ item.category_id }}</span>
+               @if (item.publish_at) {
+                 <span><strong>Publish:</strong> {{ item.publish_at | date:'medium' }}</span>
+               }
+               <span><strong>Created:</strong> {{ item.createdAt | date:'medium' }}</span>
+             </div>
+             @if (item.tags.length) {
+               <div class="modal-tags">
+                 @for (tag of item.tags; track tag) {
+                   <span class="tag">{{ tag }}</span>
+                 }
+               </div>
+             }
+             @if (item.youtubeUrl) {
+               <a class="btn primary" [href]="item.youtubeUrl" target="_blank" rel="noopener noreferrer">
+                 View on YouTube
+               </a>
+             }
+           </div>
+         </div>
+       </div>
+     }
+
+     @if (viewingDraft(); as draft) {
+       <div class="modal-overlay" (click)="closeView()">
+         <div class="modal" (click)="$event.stopPropagation()">
+           <div class="modal-header">
+             <h2>{{ draft.content?.title || 'Untitled' }}</h2>
+             <button class="modal-close" (click)="closeView()">&times;</button>
+           </div>
+           <div class="modal-body">
+             <div class="detail-grid">
+               <div class="detail-item">
+                 <span class="detail-label">Content</span>
+                 <span class="detail-value">{{ draft.content?.title || draft.contentId }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Background Video ID</span>
+                 <span class="detail-value mono">{{ draft.backgroundVideoId }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Channel ID</span>
+                 <span class="detail-value mono">{{ draft.channelId }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Theme</span>
+                 <span class="detail-value">{{ draft.theme || '—' }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Audio</span>
+                 <span class="detail-value">{{ draft.audio?.name || draft.audioId || '—' }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Subscribe Image</span>
+                 <span class="detail-value">{{ draft.subscribeImage?.name || draft.subscribeImageId || '—' }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Published Date</span>
+                 <span class="detail-value">{{ (draft.publishedAt | date: 'medium') || '—' }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Status</span>
+                 <span class="detail-value">{{ draft.status }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Visibility</span>
+                 <span class="detail-value">{{ draft.visibility || '—' }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Created</span>
+                 <span class="detail-value">{{ draft.createdAt | date: 'medium' }}</span>
+               </div>
+               <div class="detail-item">
+                 <span class="detail-label">Updated</span>
+                 <span class="detail-value">{{ draft.updatedAt | date: 'medium' }}</span>
+               </div>
+             </div>
+             @if (draft.content?.content) {
+               <div class="detail-section">
+                 <span class="detail-label">Content</span>
+                 <div class="content-preview" [innerHTML]="draft.content?.content"></div>
+               </div>
+             }
+           </div>
+           <div class="modal-actions">
+             <button class="btn ghost" (click)="closeView()">Close</button>
+             <a class="btn ghost" [routerLink]="['/draft/edit', draft.id]" (click)="closeView()">Edit</a>
+             <button class="btn primary" (click)="closeView(); generateFromDraft(draft)" [disabled]="generatingDraftId() === draft.id">
+               {{ generatingDraftId() === draft.id ? 'Generating...' : 'Generate Video' }}
+             </button>
+           </div>
+         </div>
+       </div>
+     }
+   `,
   styles: [`
     .page { display: flex; flex-direction: column; gap: 1rem; }
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
@@ -310,6 +441,19 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
       .col-lang, .col-date { display: none; }
       .editor-grid { grid-template-columns: 1fr; }
     }
+
+    .drafts-section { margin-top: 2.5rem; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    .section-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); margin: 0; }
+    .drafts-table .col-title { min-width: 160px; }
+    .drafts-table .col-theme { width: 100px; }
+    .drafts-table .col-audio { width: 100px; }
+    .drafts-table .col-status { width: 80px; }
+    .drafts-table .col-date { width: 130px; white-space: nowrap; }
+    .drafts-table .col-actions { width: 150px; }
+    .empty.small { padding: 1.8rem 1rem; }
+    .empty.small .empty-icon { font-size: 1.5rem; }
+    .empty.small p { font-size: 0.82rem; }
   `]
 })
 export class VideoMetadataComponent implements OnInit {
@@ -327,6 +471,12 @@ export class VideoMetadataComponent implements OnInit {
   filterPrivacy = signal('');
   sortBy = signal('newest');
   viewingItem = signal<MetadataItem | null>(null);
+
+  drafts = signal<DraftVideo[]>([]);
+  draftsLoading = signal(true);
+  draftsError = signal<string | null>(null);
+  generatingDraftId = signal<string | null>(null);
+  viewingDraft = signal<DraftVideo | null>(null);
 
   filteredRecords = computed(() => {
     let list = this.records();
@@ -367,6 +517,7 @@ export class VideoMetadataComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly auth: AuthService,
     private readonly toast: ToastService,
+    private readonly router: Router,
   ) {
     const user = this.auth.getCurrentUser();
     if (user) this.currentUserId.set(user.id);
@@ -385,6 +536,7 @@ export class VideoMetadataComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMetadata();
+    this.loadDrafts();
   }
 
   private loadMetadata(): void {
@@ -402,6 +554,84 @@ export class VideoMetadataComponent implements OnInit {
     });
   }
 
+  private loadDrafts(): void {
+    this.draftsLoading.set(true);
+    this.draftsError.set(null);
+    this.api.getDraftVideos().subscribe({
+      next: (items) => {
+        this.drafts.set(items);
+        this.draftsLoading.set(false);
+      },
+      error: (err) => {
+        const status = err.status;
+        if (status === 403) this.draftsError.set("You don't have permission to view drafts");
+        else this.draftsError.set(err?.error?.message || err?.message || 'Failed to load drafts');
+        this.draftsLoading.set(false);
+      },
+    });
+  }
+
+  generateFromDraft(draft: DraftVideo) {
+    this.generatingDraftId.set(draft.id);
+    const publishedDate = draft.publishedAt ? new Date(draft.publishedAt).toISOString() : undefined;
+    this.api
+      .generateFromVideo(draft.contentId, draft.backgroundVideoId, {
+        audioId: draft.audioId || undefined,
+        theme: draft.theme || undefined,
+        channelId: draft.channelId,
+        publishedDate,
+        subscribeImageId: draft.subscribeImageId || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.generatingDraftId.set(null);
+          this.toast.show('Video generation started', 'success');
+          this.router.navigate(['/generation', res.metadata.id]);
+        },
+        error: (err) => {
+          this.generatingDraftId.set(null);
+          const status = err.status;
+          const body = err.error;
+          let msg = 'Failed to generate video';
+          if (status === 403) msg = "You don't have permission";
+          else if (status === 404) msg = 'Draft or content not found (already deleted?)';
+          else if (typeof body === 'string') msg = body;
+          else if (body?.message) msg = body.message;
+          else if (err.message) msg = err.message;
+          if (status) msg = `[${status}] ${msg}`;
+          this.toast.show(msg, 'error');
+        },
+      });
+  }
+
+  viewDraft(draft: DraftVideo): void {
+    this.viewingDraft.set(draft);
+  }
+
+  closeView(): void {
+    this.viewingItem.set(null);
+    this.viewingDraft.set(null);
+  }
+
+  deleteDraft(draft: DraftVideo): void {
+    if (!confirm(`Delete this draft?`)) return;
+    this.api.deleteDraftVideo(draft.id).subscribe({
+      next: () => {
+        this.drafts.update((list) => list.filter((d) => d.id !== draft.id));
+        this.toast.show('Draft deleted', 'success');
+      },
+      error: (err) => {
+        const status = err.status;
+        let msg = 'Failed to delete draft';
+        if (status === 403) msg = "You don't have permission to delete this draft";
+        else if (status === 404) msg = 'Draft not found (already deleted?)';
+        else msg = err?.error?.message || err?.message || msg;
+        if (status) msg = `[${status}] ${msg}`;
+        this.toast.show(msg, 'error');
+      },
+    });
+  }
+
   clearFilters(): void {
     this.searchQuery.set('');
     this.filterStatus.set('');
@@ -415,10 +645,6 @@ export class VideoMetadataComponent implements OnInit {
 
   openView(item: MetadataItem): void {
     this.viewingItem.set(item);
-  }
-
-  closeView(): void {
-    this.viewingItem.set(null);
   }
 
   startEdit(item: MetadataItem): void {

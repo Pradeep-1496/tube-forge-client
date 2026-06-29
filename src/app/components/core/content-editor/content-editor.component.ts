@@ -2,44 +2,52 @@ import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { VideoContent, Visibility } from '../../../services/api.service';
+import { HtmlPreviewComponent } from '../../shared/html-preview/html-preview.component';
 
 @Component({
   selector: 'app-content-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, HtmlPreviewComponent],
   template: `
     <div class="editor" [formGroup]="form">
       <h3>{{ initial()?.id ? 'Edit content' : 'New video content' }}</h3>
-      <div class="field">
-        <label for="title">Title</label>
-        <input id="title" formControlName="title" placeholder="Enter a descriptive title" />
-      </div>
-      <div class="field">
-        <label for="content">Content</label>
-        <textarea
-          id="content"
-          rows="8"
-          formControlName="content"
-          placeholder="Write the full script or long-form text content for the video..."
-        ></textarea>
-        <small class="char-count">{{ form.controls['content'].value?.length ?? 0 }} characters</small>
-      </div>
-      <div class="visibility-row">
-        <div class="toggle-wrapper">
-          <button
-            type="button"
-            class="toggle-switch"
-            [class.active]="form.controls['visibility'].value === 'public'"
-            (click)="toggleVisibility()"
-            [attr.aria-label]="form.controls['visibility'].value === 'public' ? 'Set private' : 'Set public'"
-          >
-            <span class="toggle-knob"></span>
-          </button>
-          <span class="toggle-text">{{ form.controls['visibility'].value === 'public' ? 'Public' : 'Private' }}</span>
+      <div class="editor-body">
+        <div class="editor-fields">
+          <div class="field">
+            <label for="title">Title</label>
+            <input id="title" formControlName="title" placeholder="Enter a descriptive title" />
+          </div>
+          <div class="field">
+            <label for="content">Content</label>
+            <textarea
+              id="content"
+              rows="8"
+              formControlName="content"
+              placeholder="Write the full script or long-form text content for the video..."
+            ></textarea>
+            <small class="char-count">{{ form.controls['content'].value?.length ?? 0 }} characters</small>
+          </div>
+          <div class="visibility-row">
+            <div class="toggle-wrapper">
+              <button
+                type="button"
+                class="toggle-switch"
+                [class.active]="form.controls['visibility'].value === 'public'"
+                (click)="toggleVisibility()"
+                [attr.aria-label]="form.controls['visibility'].value === 'public' ? 'Set private' : 'Set public'"
+              >
+                <span class="toggle-knob"></span>
+              </button>
+              <span class="toggle-text">{{ form.controls['visibility'].value === 'public' ? 'Public' : 'Private' }}</span>
+            </div>
+            <span class="visibility-hint">
+              {{ form.controls['visibility'].value === 'public' ? 'Visible to all users' : 'Only visible to you' }}
+            </span>
+          </div>
         </div>
-        <span class="visibility-hint">
-          {{ form.controls['visibility'].value === 'public' ? 'Visible to all users' : 'Only visible to you' }}
-        </span>
+        <div class="preview-section">
+          <app-html-preview [html]="form.controls['content'].value || ''" />
+        </div>
       </div>
       <div class="actions">
         <button type="button" class="btn ghost" (click)="cancel.emit()">Cancel</button>
@@ -52,6 +60,9 @@ import { VideoContent, Visibility } from '../../../services/api.service';
   styles: [`
     .editor { background: var(--border-subtle); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
     .editor h3 { margin: 0 0 0.25rem; color: var(--text); }
+    .editor-body { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 800px) { .editor-body { grid-template-columns: 1fr; } }
+    .editor-fields { display: flex; flex-direction: column; gap: 1rem; }
     .field { display: flex; flex-direction: column; gap: 0.35rem; }
     label { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
     input, textarea, select {
@@ -70,6 +81,7 @@ import { VideoContent, Visibility } from '../../../services/api.service';
     .toggle-switch.active .toggle-knob { transform: translateX(1.2rem); }
     .toggle-text { font-weight: 600; font-size: 0.88rem; color: var(--text); }
     .visibility-hint { font-size: 0.78rem; color: var(--muted); }
+    .preview-section { display: flex; flex-direction: column; }
     .actions { display: flex; justify-content: flex-end; gap: 0.6rem; }
     .btn { padding: 0.55rem 1.2rem; border-radius: 0.55rem; font-weight: 600; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
     .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }

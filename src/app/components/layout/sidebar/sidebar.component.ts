@@ -24,6 +24,22 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">◫</span>
           @if (!collapsed()) { <span>Dashboard</span> }
         </a>
+        <a routerLink="/channels" routerLinkActive="active" class="nav-item">
+          <span class="icon">◎</span>
+          @if (!collapsed()) { <span>Channels</span> }
+        </a>
+        <a routerLink="/backgrounds" routerLinkActive="active" class="nav-item">
+          <span class="icon">🖼</span>
+          @if (!collapsed()) { <span>Backgrounds</span> }
+        </a>
+        <a routerLink="/audios" routerLinkActive="active" class="nav-item">
+          <span class="icon">♪</span>
+          @if (!collapsed()) { <span>Audios</span> }
+        </a>
+         <a routerLink="/content" routerLinkActive="active" class="nav-item">
+          <span class="icon">📄</span>
+          @if (!collapsed()) { <span>Content</span> }
+        </a>
         <a routerLink="/video-metadata" routerLinkActive="active" class="nav-item">
           <span class="icon">🎞</span>
           @if (!collapsed()) { <span>Video Metadata</span> }
@@ -36,30 +52,12 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">▶</span>
           @if (!collapsed()) { <span>Create from Video</span> }
         </a>
-        <a routerLink="/drafts" routerLinkActive="active" class="nav-item">
-          <span class="icon">📝</span>
-          @if (!collapsed()) { <span>Drafts</span> }
-        </a>
-        <a routerLink="/content" routerLinkActive="active" class="nav-item">
-          <span class="icon">📄</span>
-          @if (!collapsed()) { <span>Content</span> }
-        </a>
-        <a routerLink="/backgrounds" routerLinkActive="active" class="nav-item">
-          <span class="icon">🖼</span>
-          @if (!collapsed()) { <span>Backgrounds</span> }
-        </a>
-        <a routerLink="/audios" routerLinkActive="active" class="nav-item">
-          <span class="icon">♪</span>
-          @if (!collapsed()) { <span>Audios</span> }
-        </a>
+       
         <a routerLink="/subscribe-images" routerLinkActive="active" class="nav-item">
           <span class="icon">⊞</span>
           @if (!collapsed()) { <span>Subscribe Imgs</span> }
         </a>
-        <a routerLink="/channels" routerLinkActive="active" class="nav-item">
-          <span class="icon">◎</span>
-          @if (!collapsed()) { <span>Channels</span> }
-        </a>
+        
         <a routerLink="/settings" routerLinkActive="active" class="nav-item">
           <span class="icon">⚙</span>
           @if (!collapsed()) { <span>Settings</span> }
