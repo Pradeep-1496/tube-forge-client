@@ -9,11 +9,18 @@ export class AuthService {
 
   constructor(private readonly router: Router) {}
 
-  login(token: string, user: { id: string; name?: string; email: string } = { id: '', email: '' }): void {
+  login(
+    token: string,
+    user: { id: string; name?: string; email: string } = { id: '', email: '' },
+  ): void {
     if (!user.id) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        user = { id: payload.sub || '', name: payload.name || user.name, email: payload.email || user.email };
+        user = {
+          id: payload.sub || '',
+          name: payload.name || user.name,
+          email: payload.email || user.email,
+        };
       } catch {
         // keep provided user
       }

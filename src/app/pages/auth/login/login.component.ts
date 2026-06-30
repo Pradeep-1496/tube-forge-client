@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService, LoginRequest, LoginResponse } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 
@@ -200,6 +200,7 @@ export class LoginComponent {
     private readonly api: ApiService,
     private readonly auth: AuthService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -207,8 +208,12 @@ export class LoginComponent {
     });
 
     if (this.auth.getToken()) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigateByUrl(this.returnUrl);
     }
+  }
+
+  private get returnUrl(): string {
+    return this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
   }
 
   onSubmit() {
@@ -219,7 +224,7 @@ export class LoginComponent {
     this.api.login({ email, password }).subscribe({
       next: (res: LoginResponse) => {
         this.auth.login(res.access_token, { id: '', name: res.name, email: res.email });
-        if (res.access_token) this.router.navigate(['/dashboard']);
+        if (res.access_token) this.router.navigateByUrl(this.returnUrl);
       },
       error: (err: { error?: { message?: string } }) => {
         this.error.set(err?.error?.message ?? 'Login failed. Please try again.');

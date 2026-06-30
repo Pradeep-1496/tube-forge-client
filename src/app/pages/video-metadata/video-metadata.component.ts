@@ -142,7 +142,7 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
               </tr>
             </thead>
             <tbody>
-              @for (item of filteredRecords(); track item.id) {
+              @for (item of paginatedMetadata(); track item.id) {
                 <tr>
                   <td class="col-thumb">
                     <div class="thumb" (click)="openView(item)">
@@ -175,6 +175,13 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
               }
             </tbody>
           </table>
+          @if (metadataTotalPages() > 1) {
+            <div class="pagination">
+              <button class="page-btn" [disabled]="metadataPage() <= 1" (click)="metadataPage.set(metadataPage() - 1)">← Prev</button>
+              <span class="page-info">Page {{ metadataPage() }} of {{ metadataTotalPages() }}</span>
+              <button class="page-btn" [disabled]="metadataPage() >= metadataTotalPages()" (click)="metadataPage.set(metadataPage() + 1)">Next →</button>
+            </div>
+          }
         </div>
        }
      </div>
@@ -207,7 +214,7 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
                </tr>
              </thead>
              <tbody>
-               @for (draft of drafts(); track draft.id) {
+                @for (draft of paginatedDrafts(); track draft.id) {
                  <tr>
                    <td class="col-title">
                      <span class="cell-title">{{ draft.content?.title || 'Untitled' }}</span>
@@ -233,9 +240,16 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
                  </tr>
                }
              </tbody>
-           </table>
-         </div>
-       }
+            </table>
+            @if (draftTotalPages() > 1) {
+              <div class="pagination">
+                <button class="page-btn" [disabled]="draftPage() <= 1" (click)="draftPage.set(draftPage() - 1)">← Prev</button>
+                <span class="page-info">Page {{ draftPage() }} of {{ draftTotalPages() }}</span>
+                <button class="page-btn" [disabled]="draftPage() >= draftTotalPages()" (click)="draftPage.set(draftPage() + 1)">Next →</button>
+              </div>
+            }
+          </div>
+        }
      </div>
 
      @if (viewingItem(); as item) {
@@ -454,6 +468,11 @@ import { StatusBadgeComponent } from '../../components/shared/status-badge/statu
     .empty.small { padding: 1.8rem 1rem; }
     .empty.small .empty-icon { font-size: 1.5rem; }
     .empty.small p { font-size: 0.82rem; }
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border-top: 1px solid var(--border-subtle); }
+    .page-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 0.3rem 0.75rem; border-radius: 0.4rem; font-size: 0.8rem; cursor: pointer; font-weight: 500; transition: all 0.12s ease; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-btn:hover:not(:disabled) { background: var(--border-subtle); }
+    .page-info { font-size: 0.8rem; color: var(--muted); }
   `]
 })
 export class VideoMetadataComponent implements OnInit {
@@ -486,7 +505,7 @@ export class VideoMetadataComponent implements OnInit {
       list = list.filter(
         (r) =>
           r.title.toLowerCase().includes(query) ||
-          r.description.toLowerCase().includes(query),
+          (r.description?.toLowerCase().includes(query) ?? false),
       );
     }
 
@@ -511,6 +530,28 @@ export class VideoMetadataComponent implements OnInit {
 
     return list;
   });
+
+  readonly pageSize = 10;
+
+  metadataPage = signal(1);
+  paginatedMetadata = computed(() => {
+    const all = this.filteredRecords();
+    const totalPages = Math.max(1, Math.ceil(all.length / this.pageSize));
+    const page = Math.min(this.metadataPage(), totalPages);
+    const start = (page - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  });
+  metadataTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredRecords().length / this.pageSize)));
+
+  draftPage = signal(1);
+  paginatedDrafts = computed(() => {
+    const all = this.drafts();
+    const totalPages = Math.max(1, Math.ceil(all.length / this.pageSize));
+    const page = Math.min(this.draftPage(), totalPages);
+    const start = (page - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  });
+  draftTotalPages = computed(() => Math.max(1, Math.ceil(this.drafts().length / this.pageSize)));
 
   constructor(
     private readonly api: ApiService,

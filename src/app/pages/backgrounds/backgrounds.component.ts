@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BackgroundService, BackgroundVideoService } from '../../services/asset.service';
+import { BackgroundService, BackgroundVideoService, SubscribeImageService } from '../../services/asset.service';
 import { AuthService } from '../../services/auth.service';
 import { MediaAssetComponent } from '../../components/shared/media-asset/media-asset.component';
 import { AssetPreviewModalComponent } from '../../components/shared/asset-preview-modal/asset-preview-modal.component';
@@ -20,6 +20,7 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
       <div class="tabs">
         <button class="tab" [class.active]="tab() === 'images'" (click)="tab.set('images')">Images</button>
         <button class="tab" [class.active]="tab() === 'videos'" (click)="tab.set('videos')">Videos</button>
+        <button class="tab" [class.active]="tab() === 'subscribe'" (click)="tab.set('subscribe')">Subscribe Imgs</button>
       </div>
 
       @if (tab() === 'images') {
@@ -125,6 +126,58 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
           }
         </section>
       }
+
+      @if (tab() === 'subscribe') {
+        <section class="list">
+          <app-asset-upload-form
+            accept="image/*"
+            [showTypeField]="true"
+            [uploadFn]="subService.upload.bind(subService)"
+            (uploaded)="subService.load()"
+          />
+
+          @if (subService.loading$()) {
+            <div class="loading-grid">
+              @for (_ of [1,2,3,4]; track _) {
+                <div class="card"><div class="skeleton-pulse"></div></div>
+              }
+            </div>
+          } @else {
+            <div class="grid">
+              @for (img of subService.items$(); track img.id) {
+                <article class="card" [class.inactive]="img.visibility !== 'public'" (dblclick)="openPreview(subService.getSrc(img), 'image', img.name)">
+                  <div class="thumb" [class.portrait]="isPortrait(img)" [class.landscape]="!isPortrait(img)">
+                    <app-media-asset
+                      type="image"
+                      [src]="subService.getSrc(img)"
+                      [alt]="img.name"
+                      [aspect]="isPortrait(img) ? '9/16' : '16/9'"
+                    />
+                  </div>
+                  <div class="info">
+                    <div class="name">{{ img.name }}</div>
+                    <small>{{ img.type }}{{ img.size ? ' · ' + (img.size / 1024).toFixed(1) + ' KB' : '' }}</small>
+                    <div class="user-row">
+                      <small class="owner">{{ img.user?.name || 'Unknown' }}</small>
+                      @if (isOwned(img)) {
+                        <span class="owned-badge">Owned</span>
+                      }
+                    </div>
+                  </div>
+                  @if (isOwned(img)) {
+                    <div class="actions">
+                      <button class="btn sm danger ghost" (click)="removeSubscribe(img)">Delete</button>
+                    </div>
+                  }
+                </article>
+              }
+              @if (!subService.items$().length) {
+                <div class="notice">No subscribe images yet.</div>
+              }
+            </div>
+          }
+        </section>
+      }
     </div>
 
     @if (preview()) {
@@ -180,7 +233,7 @@ import { AssetUploadFormComponent } from '../../components/shared/asset-upload-f
   `]
 })
 export class BackgroundsComponent implements OnInit {
-  tab = signal<'images' | 'videos'>('images');
+  tab = signal<'images' | 'videos' | 'subscribe'>('images');
   preview = signal(false);
   previewSrc = signal('');
   previewType = signal<'image' | 'video' | 'audio'>('image');
@@ -193,6 +246,7 @@ export class BackgroundsComponent implements OnInit {
   constructor(
     readonly bgService: BackgroundService,
     readonly bvService: BackgroundVideoService,
+    readonly subService: SubscribeImageService,
     private readonly auth: AuthService,
   ) {
     const user = this.auth.getCurrentUser();
@@ -202,6 +256,7 @@ export class BackgroundsComponent implements OnInit {
   ngOnInit() {
     this.bgService.load();
     this.bvService.load();
+    this.subService.load();
   }
 
   isOwned(item: any): boolean {
@@ -216,9 +271,12 @@ export class BackgroundsComponent implements OnInit {
 
   openPreview(src: string, type: 'image' | 'video' | 'audio', alt: string, portrait = false) {
     const currentTab = this.tab();
-    const list = currentTab === 'images' ? [...this.bgService.items$()] : [...this.bvService.items$()];
+    const list = currentTab === 'images' ? [...this.bgService.items$()] : currentTab === 'videos' ? [...this.bvService.items$()] : [...this.subService.items$()];
     this.previewItems.set(list);
-    const idx = list.findIndex((it: any) => (currentTab === 'images' ? this.bgService.getSrc(it) : this.bvService.getSrc(it)) === src);
+    const idx = list.findIndex((it: any) => {
+      const getSrc = currentTab === 'images' ? this.bgService.getSrc.bind(this.bgService) : currentTab === 'videos' ? this.bvService.getSrc.bind(this.bvService) : this.subService.getSrc.bind(this.subService);
+      return getSrc(it) === src;
+    });
     this.previewIndex.set(idx >= 0 ? idx : 0);
     this.previewSrc.set(src);
     this.previewType.set(type);
@@ -238,9 +296,10 @@ export class BackgroundsComponent implements OnInit {
     const next = (current + dir + items.length) % items.length;
     this.previewIndex.set(next);
     const it = items[next];
-    const isVideoTab = this.tab() === 'videos';
-    const isVideo = isVideoTab;
-    const src = isVideoTab ? this.bvService.getSrc(it) : this.bgService.getSrc(it);
+    const currentTab = this.tab();
+    const isVideo = currentTab === 'videos';
+    const getSrc = currentTab === 'images' ? this.bgService.getSrc.bind(this.bgService) : currentTab === 'videos' ? this.bvService.getSrc.bind(this.bvService) : this.subService.getSrc.bind(this.subService);
+    const src = getSrc(it);
     const type = isVideo ? 'video' : 'image';
     const alt = it.name || '';
     const portrait = isVideo ? this.isPortrait(it) : false;
@@ -258,5 +317,10 @@ export class BackgroundsComponent implements OnInit {
   removeVideo(bv: any) {
     if (!confirm('Delete this background video?')) return;
     this.bvService.remove(bv.id);
+  }
+
+  removeSubscribe(img: any) {
+    if (!confirm(`Delete "${img.name}"?`)) return;
+    this.subService.remove(img.id);
   }
 }
