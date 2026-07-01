@@ -32,7 +32,13 @@ export interface PickerOption {
             <div class="option" [class.selected]="selectedId() === opt.id" (click)="select(opt.id)">
               @if (opt.preview) {
                 <div class="preview-img">
-                  <img [src]="opt.preview" [alt]="opt.name" />
+                  @if (type() === 'background-videos') {
+                    <video autoplay muted loop playsinline>
+                      <source [src]="opt.preview" type="video/mp4" />
+                    </video>
+                  } @else {
+                    <img [src]="opt.preview" [alt]="opt.name" />
+                  }
                 </div>
               }
               <div class="option-info">
@@ -53,7 +59,7 @@ export interface PickerOption {
 
         <footer class="modal-footer">
           <button class="btn ghost" (click)="close.emit()">Cancel</button>
-          <button class="btn primary" (click)="confirm()" [disabled]="!selectedId()">Select</button>
+          <button class="btn primary" (click)="confirm()">Select</button>
         </footer>
       </div>
     </div>
@@ -96,8 +102,10 @@ export class AssetPickerComponent implements OnInit {
   showSearch = signal(false);
   search = signal('');
   options = signal<PickerOption[]>([]);
+  selectedLocal = signal('');
 
   private readonly api: ApiService;
+  private readonly baseUrl = 'http://localhost:3000';
 
   constructor(api: ApiService) {
     this.api = api;
@@ -116,20 +124,26 @@ export class AssetPickerComponent implements OnInit {
     this.loadOptions();
   }
 
+  private resolvePreview(path: string | undefined): string | undefined {
+    if (!path) return undefined;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `${this.baseUrl}/${path.replace(/\\/g, '/')}`;
+  }
+
   private loadOptions() {
     switch (this.type()) {
       case 'backgrounds':
         this.title.set('Background');
         this.showSearch.set(true);
         this.api.getBackgrounds().subscribe({
-          next: (items: BackgroundAsset[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type, preview: i.path })))
+          next: (items: BackgroundAsset[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type, preview: this.resolvePreview(i.path) })))
         });
         break;
       case 'background-videos':
         this.title.set('Background Video');
         this.showSearch.set(true);
         this.api.getBackgroundVideos().subscribe({
-          next: (items: BackgroundVideo[]) => this.options.set(items.map(i => ({ id: i.bg_video_id, name: i.name, subtitle: i.type })))
+          next: (items: BackgroundVideo[]) => this.options.set(items.map(i => ({ id: i.bg_video_id, name: i.name, subtitle: i.type, preview: this.resolvePreview(i.path) })))
         });
         break;
       case 'audios':
@@ -143,7 +157,7 @@ export class AssetPickerComponent implements OnInit {
         this.title.set('Subscribe Image');
         this.showSearch.set(true);
         this.api.getSubscribeImages().subscribe({
-          next: (items: SubscribeImage[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type, preview: i.path })))
+          next: (items: SubscribeImage[]) => this.options.set(items.map(i => ({ id: i.id, name: i.name, subtitle: i.type, preview: this.resolvePreview(i.path) })))
         });
         break;
       case 'channels':
@@ -164,12 +178,15 @@ export class AssetPickerComponent implements OnInit {
   }
 
   select(id: string) {
+    this.selectedLocal.set(id);
     const opt = this.options().find(o => o.id === id) || null;
     this.selected.emit(opt);
+    this.close.emit();
   }
 
   confirm() {
-    const opt = this.options().find(o => o.id === this.selectedId()) || null;
+    const id = this.selectedLocal() || this.selectedId();
+    const opt = this.options().find(o => o.id === id) || null;
     this.selected.emit(opt);
     this.close.emit();
   }

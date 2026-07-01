@@ -1,144 +1,273 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ApiService, Channel, TextEffect, BackgroundAsset } from '../../services/api.service';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { ApiService, Template } from '../../services/api.service';
+import { DomSanitizer } from '@angular/platform-browser';
+import {
+  AssetPickerComponent,
+  PickerOption,
+} from '../../components/core/asset-picker/asset-picker.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-create-video',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, AssetPickerComponent],
   template: `
     <div class="create">
       <header class="page-header">
         <h1>Create Video</h1>
-        <p>Fill the form and preview before generating.</p>
+        <p>Choose a template, fill in the details, and generate your video.</p>
       </header>
 
+      <div class="template-bar">
+        <span class="bar-label">Template:</span>
+        <div class="template-options">
+          @for (t of templates(); track t.id) {
+            <button
+              class="template-chip"
+              [class.selected]="selectedTemplate()?.id === t.id"
+              (click)="selectTemplate(t)"
+            >
+              {{ t.name }}
+            </button>
+          }
+          @if (!templates().length) {
+            <span class="bar-empty">Loading templates…</span>
+          }
+        </div>
+      </div>
+
       <div class="split">
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form">
+        <form class="form" (ngSubmit)="doGenerate()">
           <fieldset>
-            <legend>Configuration</legend>
-            <div class="field">
-              <label for="channelId">Channel</label>
-              <select id="channelId" formControlName="channelId" required>
-                <option value="" disabled>Select channel</option>
-                <option *ngFor="let ch of channels()" [ngValue]="ch.id">{{ ch.name }}</option>
-              </select>
-            </div>
+            <legend>Details</legend>
+
             <div class="field">
               <label for="title">Title</label>
-              <input id="title" type="text" formControlName="title" maxlength="100" required />
-              <small>{{ form.controls['title'].value?.length ?? 0 }}/100</small>
+              <input
+                id="title"
+                type="text"
+                [ngModel]="title()"
+                (ngModelChange)="title.set($event)"
+                name="title"
+                maxlength="100"
+                placeholder="My Video Title"
+                required
+              />
             </div>
+
             <div class="field">
-              <label for="content">Content / Dialogue</label>
+              <label for="content">
+                Content
+                @if (selectedTemplate()?.name === 'Conversation v1') {
+                  <span class="hint"
+                    >— Use <code>Speaker: Message || </code>end of one dialog ||</span
+                  >
+                }
+                @if (selectedTemplate()?.name === 'Quote') {
+                  <span class="hint">— Quote text, then <code>-- Author</code></span>
+                }
+              </label>
               <textarea
                 id="content"
                 rows="6"
-                formControlName="content"
-                required
-                placeholder="Speaker: Line..."
+                [ngModel]="content()"
+                (ngModelChange)="content.set($event)"
+                name="content"
+                placeholder="Enter your content here..."
               ></textarea>
-            </div>
-            <div class="row">
-              <div class="field">
-                <label for="contentType">Type</label>
-                <select id="contentType" formControlName="contentType">
-                  <option value="conversation">Conversation</option>
-                  <option value="quote">Quote</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="publishAt">Schedule</label>
-                <input id="publishAt" type="datetime-local" formControlName="publishAt" />
-              </div>
-            </div>
-            <div class="row">
-              <div class="field">
-                <label for="textEffect">Text Effect</label>
-                <select id="textEffect" formControlName="textEffectId">
-                  <option [ngValue]="null">Default</option>
-                  <option *ngFor="let te of textEffects()" [value]="te.id">{{ te.name }}</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="background">Background</label>
-                <select id="background" formControlName="backgroundAssetId">
-                  <option [ngValue]="null">Random</option>
-                  <option *ngFor="let b of backgrounds()" [value]="b.id">{{ b.name }}</option>
-                </select>
-              </div>
-            </div>
-            <div class="field">
-              <label for="tags">Tags (comma separated)</label>
-              <input
-                id="tags"
-                type="text"
-                formControlName="tags"
-                placeholder="shorts, viral, convoloop"
-              />
-            </div>
-            <div class="field">
-              <label for="thumbnail">Thumbnail HTML</label>
-              <textarea
-                id="thumbnail"
-                rows="5"
-                formControlName="thumbnail"
-                placeholder="<div style='...'>...</div>"
-              ></textarea>
-              <small>Inline CSS only. Use the preview to check rendering.</small>
+              <small>{{ content().length }} chars</small>
             </div>
           </fieldset>
+
+          <fieldset>
+            <legend>Assets</legend>
+            <div class="asset-row">
+              <div class="field">
+                <label>Background</label>
+                <div class="bg-picker-group">
+                  <button type="button" class="btn ghost" (click)="openPicker('backgrounds')">
+                    {{ selectedBgImage() ? selectedBgImage()!.name : 'Image…' }}
+                  </button>
+                  <button type="button" class="btn ghost" (click)="openPicker('background-videos')">
+                    {{ selectedBgVideo() ? selectedBgVideo()!.name : 'Video…' }}
+                  </button>
+                </div>
+                @if (selectedBgImage() || selectedBgVideo()) {
+                  <button type="button" class="btn sm ghost" (click)="clearBg()">✕ Clear</button>
+                }
+              </div>
+              <div class="field">
+                <label>Audio</label>
+                <button type="button" class="btn ghost full" (click)="openPicker('audios')">
+                  {{ selectedAudio() ? selectedAudio()!.name : 'Select…' }}
+                </button>
+                @if (selectedAudio()) {
+                  <button type="button" class="btn sm ghost" (click)="selectedAudio.set(null)">
+                    ✕ Clear
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="asset-row">
+              <div class="field">
+                <label>Subscribe Image</label>
+                <button
+                  type="button"
+                  class="btn ghost full"
+                  (click)="openPicker('subscribe-images')"
+                >
+                  {{ selectedSubscribeImage() ? selectedSubscribeImage()!.name : 'Select…' }}
+                </button>
+                @if (selectedSubscribeImage()) {
+                  <button
+                    type="button"
+                    class="btn sm ghost"
+                    (click)="selectedSubscribeImage.set(null)"
+                  >
+                    ✕ Clear
+                  </button>
+                }
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Publishing</legend>
+            <div class="asset-row">
+              <div class="field">
+                <label>Channel</label>
+                <button type="button" class="btn ghost full" (click)="openPicker('channels')">
+                  {{ selectedChannel() ? selectedChannel()!.name : 'Select…' }}
+                </button>
+                @if (selectedChannel()) {
+                  <button type="button" class="btn sm ghost" (click)="selectedChannel.set(null)">
+                    ✕ Clear
+                  </button>
+                }
+              </div>
+              <div class="field">
+                <label for="publishAt">Publish Date</label>
+                <input
+                  id="publishAt"
+                  type="datetime-local"
+                  [(ngModel)]="publishDate"
+                  name="publishDate"
+                />
+              </div>
+            </div>
+          </fieldset>
+
           <div class="actions">
-            <button type="submit" class="btn primary" [disabled]="!form.valid || submitting()">
-              {{ submitting() ? 'Creating…' : 'Create Draft' }}
+            <button type="submit" class="btn primary" [disabled]="!canGenerate() || generating()">
+              @if (generating()) {
+                <span class="spinner"></span>
+                Generating…
+              } @else {
+                Generate Video
+              }
             </button>
           </div>
         </form>
 
-        <section class="preview">
-          <h3>Preview</h3>
+        <aside class="preview">
+          <div class="preview-header">
+            <h3>Preview</h3>
+            <span class="badge" *ngIf="selectedTemplate()">{{ selectedTemplate()!.name }}</span>
+          </div>
           <div class="device">
-            <div class="screen" [ngStyle]="previewBackground()">
-              <div class="overlay"></div>
-              <div class="content">
-                <div class="preview-title">{{ form.controls['title'].value || 'Title' }}</div>
-                <div class="preview-thumb" [innerHTML]="thumbnailHtml()"></div>
-                <div class="preview-lines">
-                  <div *ngFor="let line of previewLines()" class="preview-line">
-                    <span class="speaker">{{ line.speaker }}:</span>
-                    <span class="text">{{ line.text }}</span>
-                  </div>
+            <div class="device-content">
+              @if (previewHtml(); as html) {
+                <iframe [srcdoc]="safeHtml(html)" class="preview-frame" title="Preview"></iframe>
+              } @else {
+                <div class="placeholder">
+                  <span>◫</span>
+                  <p>Select a template and enter content</p>
                 </div>
-              </div>
+              }
             </div>
           </div>
-        </section>
+        </aside>
       </div>
     </div>
+
+    @if (showPicker()) {
+      <app-asset-picker
+        [type]="pickerType()"
+        (close)="showPicker.set(false)"
+        (selected)="onAssetPicked($event)"
+      />
+    }
   `,
   styles: [
     `
       .create {
         display: flex;
         flex-direction: column;
-        gap: 1.6rem;
+        gap: 1rem;
       }
       .page-header h1 {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--text);
         margin: 0;
       }
       .page-header p {
         color: var(--muted);
-        margin: 0.25rem 0 0;
-        font-size: 0.92rem;
+        margin: 0.2rem 0 0;
+        font-size: 0.88rem;
       }
+
+      .template-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        border-radius: 0.65rem;
+      }
+      .bar-label {
+        font-size: 0.82rem;
+        color: var(--muted);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .template-options {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+      .template-chip {
+        padding: 0.35rem 0.85rem;
+        border-radius: 9999px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .template-chip:hover {
+        border-color: var(--accent-weak);
+        color: var(--text);
+      }
+      .template-chip.selected {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .bar-empty {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-style: italic;
+      }
+
       .split {
         display: grid;
-        grid-template-columns: 1fr 340px;
+        grid-template-columns: 1fr 360px;
         gap: 1.5rem;
         align-items: start;
       }
@@ -150,71 +279,101 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
           order: -1;
         }
       }
-      .form fieldset {
-        background: var(--border-subtle);
-        border: 1px solid var(--border);
-        border-radius: 0.9rem;
-        padding: 1.4rem;
+
+      .form {
         display: flex;
         flex-direction: column;
         gap: 1rem;
+      }
+      fieldset {
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
       }
       legend {
         color: var(--text);
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
       }
       .field {
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
+        gap: 0.3rem;
       }
-      label {
+      .field label {
         font-size: 0.82rem;
         color: var(--muted);
         font-weight: 500;
       }
-      input,
-      select,
-      textarea {
+      .field label .hint {
+        color: var(--accent);
+        font-weight: 400;
+      }
+      .field label .hint code {
+        background: var(--border-subtle);
+        padding: 0.05rem 0.3rem;
+        border-radius: 0.2rem;
+        font-size: 0.78rem;
+      }
+      .field input,
+      .field textarea {
         background: var(--border-subtle);
         border: 1px solid var(--border);
         color: var(--text);
-        padding: 0.6rem 0.85rem;
-        border-radius: 0.55rem;
-        font-size: 0.9rem;
+        padding: 0.55rem 0.8rem;
+        border-radius: 0.5rem;
+        font-size: 0.88rem;
         width: 100%;
         font-family: inherit;
       }
-      input:focus,
-      select:focus,
-      textarea:focus {
+      .field input:focus,
+      .field textarea:focus {
         outline: none;
         border-color: var(--accent);
         box-shadow: 0 0 0 3px var(--accent-weak);
       }
-      .row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+      .field textarea {
+        resize: vertical;
+        min-height: 100px;
       }
-      small {
-        font-size: 0.75rem;
+      .field small {
+        font-size: 0.72rem;
         color: var(--muted);
         text-align: right;
       }
+      .asset-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+      .bg-picker-group {
+        display: flex;
+        gap: 0.35rem;
+      }
+      .bg-picker-group .btn {
+        flex: 1;
+      }
+      @media (max-width: 600px) {
+        .asset-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
       .actions {
         display: flex;
         justify-content: flex-end;
-        margin-top: 0.5rem;
       }
       .btn {
-        padding: 0.55rem 1.2rem;
-        border-radius: 0.55rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
         font-weight: 600;
-        font-size: 0.88rem;
-        border: 1px solid transparent;
+        font-size: 0.85rem;
         cursor: pointer;
+        border: 1px solid transparent;
         display: inline-flex;
         gap: 0.4rem;
         align-items: center;
@@ -224,174 +383,271 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
         background: var(--accent);
         color: #fff;
         border-color: var(--accent);
+        min-width: 140px;
+        justify-content: center;
+      }
+      .btn.primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
       .btn.primary:hover:not(:disabled) {
         filter: brightness(1.1);
       }
-      .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .preview h3 {
-        margin: 0 0 0.8rem;
+      .btn.ghost {
+        background: transparent;
         color: var(--text);
+        border-color: var(--border);
+      }
+      .btn.ghost:hover {
+        background: var(--border-subtle);
+      }
+      .btn.sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+      }
+      .btn.full {
+        width: 100%;
+        justify-content: flex-start;
+        text-align: left;
+      }
+      .spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        display: inline-block;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .preview {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .preview-header h3 {
+        margin: 0;
         font-size: 0.9rem;
+        color: var(--text);
+      }
+      .badge {
+        font-size: 0.68rem;
+        padding: 0.15rem 0.45rem;
+        border-radius: 9999px;
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        color: var(--muted);
       }
       .device {
-        background: var(--bg);
-        border-radius: 1.2rem;
+        width: 270px;
+        height: 480px;
+        border-radius: 0.9rem;
         border: 1px solid var(--border);
         overflow: hidden;
-      }
-      .screen {
-        aspect-ratio: 9 / 16;
         position: relative;
-        background: linear-gradient(135deg, #18181c 0%, #09090b 100%);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 1.5rem;
-        text-align: center;
+        background: #09090b;
+        flex-shrink: 0;
       }
-      .overlay {
+
+      .device-content {
         position: absolute;
         inset: 0;
-        background: rgba(0, 0, 0, 0.35);
-      }
-      .content {
-        position: relative;
-        z-index: 2;
         display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-        width: 100%;
-      }
-      .preview-title {
-        color: #fff;
-        font-weight: 700;
-        font-size: 1.2rem;
-        text-align: center;
-        word-break: break-word;
-      }
-      .preview-thumb {
-        width: 100%;
-        text-align: center;
-      }
-      .preview-thumb :deep(*) {
-        max-width: 100%;
-      }
-      .preview-lines {
-        display: flex;
-        flex-direction: column;
-        gap: 0.7rem;
-      }
-      .preview-line {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
+        align-items: center;
         justify-content: center;
-        align-items: baseline;
       }
-      .speaker {
-        color: var(--accent);
-        font-weight: 700;
-        font-size: 0.95rem;
+      .preview-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
       }
-      .text {
-        color: #fff;
-        font-size: 0.9rem;
-        word-break: break-word;
+      .placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--muted);
+      }
+      .placeholder span {
+        font-size: 2rem;
+        opacity: 0.4;
+      }
+      .placeholder p {
+        margin: 0;
+        font-size: 0.82rem;
       }
     `,
   ],
 })
 export class CreateVideoComponent implements OnInit {
-  channels = signal<Channel[]>([]);
-  textEffects = signal<TextEffect[]>([]);
-  backgrounds = signal<BackgroundAsset[]>([]);
-  submitting = signal(false);
-  form: ReturnType<typeof this.fb.group>;
-  private readonly api: ApiService;
-  private readonly fb: FormBuilder;
+  templates = signal<Template[]>([]);
+  selectedTemplate = signal<Template | null>(null);
+  title = signal('');
+  content = signal('');
 
-  constructor(
-    api: ApiService,
-    fb: FormBuilder,
-    private readonly sanitizer: DomSanitizer,
-  ) {
+  showPicker = signal(false);
+  pickerType = signal<
+    'backgrounds' | 'background-videos' | 'audios' | 'subscribe-images' | 'channels'
+  >('background-videos');
+
+  selectedBgImage = signal<PickerOption | null>(null);
+  selectedBgVideo = signal<PickerOption | null>(null);
+  selectedAudio = signal<PickerOption | null>(null);
+  selectedSubscribeImage = signal<PickerOption | null>(null);
+  selectedChannel = signal<PickerOption | null>(null);
+  publishDate = '';
+
+  generating = signal(false);
+
+  private readonly api: ApiService;
+  private readonly sanitizer: DomSanitizer;
+  private readonly router: Router;
+
+  constructor(api: ApiService, sanitizer: DomSanitizer, router: Router) {
     this.api = api;
-    this.fb = fb;
-    this.form = this.fb.group({
-      channelId: [null as string | null, Validators.required],
-      title: ['', [Validators.required, Validators.maxLength(100)]],
-      description: [''],
-      content: ['', Validators.required],
-      contentType: ['conversation'],
-      textEffectId: [null as string | null],
-      backgroundAssetId: [null as string | null],
-      publishAt: [''],
-      tags: [''],
-      thumbnail: [''],
-    });
+    this.sanitizer = sanitizer;
+    this.router = router;
   }
 
   ngOnInit(): void {
-    this.api.getChannels().subscribe({ next: (c) => this.channels.set(c) });
-    this.api.getTextEffects().subscribe({ next: (c) => this.textEffects.set(c) });
-    this.api.getBackgroundAssets().subscribe({ next: (c) => this.backgrounds.set(c) });
+    this.api.getTemplates().subscribe({ next: (t) => this.templates.set(t) });
   }
 
-  private toSingleLine(text: string): string {
-    return text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  selectTemplate(t: Template) {
+    this.selectedTemplate.set(t);
   }
 
-  onSubmit() {
-    if (this.form.invalid || this.submitting()) return;
-    this.submitting.set(true);
-    const raw = this.form.getRawValue() as Record<string, unknown>;
-    const payload = {
-      ...raw,
-      content: this.toSingleLine((raw['content'] as string) || ''),
-      tags: ((raw['tags'] as string) || '')
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean) as string[],
-    };
-    this.api.createVideo(payload as any).subscribe({
-      next: () => {
-        this.submitting.set(false);
-        alert('Draft created! Go to Videos to generate.');
-      },
-      error: (err) => {
-        this.submitting.set(false);
-        alert(err?.error ?? 'Failed');
-      },
-    });
+  safeHtml(html: string) {
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
-  previewBackground() {
-    const id = this.form.controls['backgroundAssetId'].value;
-    const asset = this.backgrounds().find((a) => a.id === id);
-    if (!asset || !asset.path) return {};
-    return {
-      background: `url(http://localhost:3000/${asset.path.replace(/\\/g, '/')}) no-repeat center / cover`,
-    };
+  private escapeForJs(s: string): string {
+    return s
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t');
   }
 
-  previewLines() {
-    const content = (this.form.controls['content'].value as string) || '';
-    return content
-      .split('\n')
-      .filter((l) => l.trim() && l.includes(':'))
-      .map((l) => {
-        const [speaker, ...rest] = l.split(':');
-        return { speaker: speaker.trim(), text: rest.join(':').trim() };
+  previewHtml = computed(() => {
+    const t = this.selectedTemplate();
+    if (!t) return null;
+    const c = this.content().trim();
+    let html = t.code.replace(/\{\{content\}\}/g, this.escapeForJs(c || 'Preview content'));
+
+    const bgImg = this.selectedBgImage();
+    const bgVideo = this.selectedBgVideo();
+
+    if (bgImg?.preview) {
+      const url = this.assetUrl(bgImg);
+      const bgStyle = `body{background-image:url('${url}');background-repeat:no-repeat;background-size:contain;background-position:center}`;
+      const styleTag = `<style>${bgStyle}</style>`;
+      html = html.replace(/<\/head\s*>/i, (m) => styleTag + m);
+    } else if (bgVideo?.preview) {
+      const url = this.assetUrl(bgVideo);
+      const clearBg = `<style>body{background:none!important}</style>`;
+      html = html.replace(/<\/head\s*>/i, (m) => clearBg + m);
+      const videoEl = `<video autoplay muted loop playsinline style="position:fixed;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none"><source src="${url}" type="video/mp4"></video>`;
+      html = html.replace(/<body[^>]*>/i, (m) => m + videoEl);
+    }
+
+    return html;
+  });
+
+  openPicker(
+    type: 'backgrounds' | 'background-videos' | 'audios' | 'subscribe-images' | 'channels',
+  ) {
+    this.pickerType.set(type);
+    this.showPicker.set(true);
+  }
+
+  onAssetPicked(opt: PickerOption | null) {
+    if (!opt) return;
+    switch (this.pickerType() as string) {
+      case 'backgrounds':
+        this.selectedBgVideo.set(null);
+        this.selectedBgImage.set(opt);
+        break;
+      case 'background-videos':
+        this.selectedBgImage.set(null);
+        this.selectedBgVideo.set(opt);
+        break;
+      case 'audios':
+        this.selectedAudio.set(opt);
+        break;
+      case 'subscribe-images':
+        this.selectedSubscribeImage.set(opt);
+        break;
+      case 'channels':
+        this.selectedChannel.set(opt);
+        break;
+    }
+  }
+
+  clearBg() {
+    this.selectedBgImage.set(null);
+    this.selectedBgVideo.set(null);
+  }
+
+  assetUrl(opt: PickerOption): string {
+    if (!opt.preview) return '';
+    if (opt.preview.startsWith('http://') || opt.preview.startsWith('https://')) return opt.preview;
+    return `http://localhost:3000/${opt.preview.replace(/\\/g, '/')}`;
+  }
+
+  canGenerate(): boolean {
+    return (
+      !!this.selectedTemplate() &&
+      !!this.title().trim() &&
+      !!this.content().trim() &&
+      !!this.selectedChannel()
+    );
+  }
+
+  doGenerate() {
+    const template = this.selectedTemplate();
+    if (!template || !this.canGenerate() || this.generating()) return;
+
+    this.generating.set(true);
+    const publishedDate = this.publishDate
+      ? new Date(this.publishDate).toISOString()
+      : new Date().toISOString();
+
+    const bgImage = this.selectedBgImage();
+    const bgVideo = this.selectedBgVideo();
+
+    this.api
+      .generateFromTemplate(template.id, {
+        content: this.content().trim(),
+        title: this.title().trim(),
+        backgroundId: bgImage?.id,
+        backgroundVideoId: bgVideo?.id,
+        audioId: this.selectedAudio()?.id,
+        subscribeImageId: this.selectedSubscribeImage()?.id,
+        channelId: this.selectedChannel()?.id || '',
+        publishedDate,
+      })
+      .subscribe({
+        next: (res) => {
+          this.generating.set(false);
+          this.router.navigate(['/generation', res.metadata.id]);
+        },
+        error: (err) => {
+          this.generating.set(false);
+          alert(err?.error?.message || err?.message || 'Generation failed');
+        },
       });
-  }
-
-  thumbnailHtml() {
-    const raw = (this.form.controls['thumbnail'].value as string) || '';
-    return this.sanitizer.bypassSecurityTrustHtml(raw);
   }
 }

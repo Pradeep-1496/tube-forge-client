@@ -86,10 +86,12 @@ export interface BackgroundAsset {
 export interface Template {
   id: string;
   name: string;
-  description?: string;
-  config: Record<string, unknown>;
-  isActive: boolean;
+  description: string;
+  code: string;
+  visibility: Visibility;
+  userId: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AudioAsset {
@@ -496,6 +498,23 @@ export class ApiService {
     }
     const filename = outputPath.replace(/\\/g, '/').split('/').pop() || '';
     return `${this.baseUrl}/output-videos/${filename}`;
+  }
+
+  generateFromTemplate(
+    templateId: string,
+    payload: {
+      content: string;
+      title: string;
+      backgroundId?: string;
+      backgroundVideoId?: string;
+      audioId?: string;
+      subscribeImageId?: string;
+      channelId: string;
+      publishedDate: string;
+    },
+  ) {
+    const url = `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromTemplate(templateId)}`;
+    return this.http.post<GenerateFromVideoResponse>(url, payload);
   }
 
   generateFromVideo(
