@@ -535,6 +535,7 @@ export class ApiService {
     templateId: string,
     contentId: string,
     payload: {
+      backgroundId?: string;
       backgroundVideoId?: string;
       audioId?: string;
       subscribeImageId?: string;

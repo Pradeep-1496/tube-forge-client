@@ -735,6 +735,7 @@ export class CreateVideoComponent implements OnInit {
     const bgVideo = this.selectedBgVideo();
 
     const commonPayload = {
+      backgroundId: bgImage?.id,
       backgroundVideoId: bgVideo?.id,
       audioId: this.selectedAudio()?.id,
       subscribeImageId: this.selectedSubscribeImage()?.id,
