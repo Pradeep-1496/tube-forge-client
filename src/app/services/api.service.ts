@@ -356,6 +356,20 @@ export interface TextEffectForm {
   isActive: boolean;
 }
 
+export interface ActivityLog {
+  id: number;
+  userId: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  details: Record<string, unknown>;
+  method: string;
+  route: string;
+  ipAddress: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly baseUrl = environment.apiBaseUrl;
@@ -842,5 +856,12 @@ export class ApiService {
 
   deleteVideo(id: string) {
     return this.http.delete<void>(`${this.baseUrl}${environment.apiEndpoints.content.remove(id)}`);
+  }
+
+  getActivityLogTimeline(limit = 10) {
+    return this.http.get<ActivityLog[]>(
+      `${this.baseUrl}${environment.apiEndpoints.activityLog.timeline}`,
+      { params: new HttpParams().set('limit', limit) },
+    );
   }
 }

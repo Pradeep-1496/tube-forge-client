@@ -67,5 +67,8 @@ export const environment = {
       update: (id: string) => `/api/subscribe-images/${id}`,
       remove: (id: string) => `/api/subscribe-images/${id}`,
     },
+    activityLog: {
+      timeline: '/api/activity-log/timeline',
+    },
   },
 };
