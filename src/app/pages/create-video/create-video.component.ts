@@ -17,11 +17,11 @@ import { Router } from '@angular/router';
     <div class="create">
       <header class="page-header">
         <h1>Create Video</h1>
-        <p>Choose a template, fill in the details, and generate your video.</p>
+        <p class="page-subtitle">Choose a template, fill in the details, and generate your video.</p>
       </header>
 
       <div class="template-bar">
-        <span class="bar-label">Template:</span>
+        <span class="template-bar-label">Template</span>
         <div class="template-options">
           @for (t of templates(); track t.id) {
             <button
@@ -39,183 +39,243 @@ import { Router } from '@angular/router';
       </div>
 
       <div class="split">
-      <form class="form" (ngSubmit)="doGenerate()">
-        <fieldset>
-          <legend>Details</legend>
-
-          <div class="field">
-            <label>Content Source</label>
-            <div class="mode-toggle">
-              <label class="mode-option">
-                <input
-                  type="radio"
-                  name="contentSource"
-                  [value]="'manual'"
-                  [ngModel]="contentSourceMode()"
-                  (ngModelChange)="contentSourceMode.set($event)"
-                />
-                Write manually
-              </label>
-              <label class="mode-option">
-                <input
-                  type="radio"
-                  name="contentSource"
-                  [value]="'existing'"
-                  [ngModel]="contentSourceMode()"
-                  (ngModelChange)="contentSourceMode.set($event)"
-                />
-                Use existing content
-              </label>
-            </div>
-          </div>
-
-          @if (contentSourceMode() === 'manual') {
-            <div class="field">
-              <label for="title">Title</label>
-              <input
-                id="title"
-                type="text"
-                [ngModel]="title()"
-                (ngModelChange)="title.set($event)"
-                name="title"
-                maxlength="100"
-                placeholder="My Video Title"
-                required
-              />
-            </div>
+        <form class="form" (ngSubmit)="doGenerate()">
+          <fieldset class="section" [class.is-ready]="sectionContentComplete()">
+            <legend class="section-legend">
+              <span class="section-indicator" [class.done]="sectionContentComplete()"></span>
+              Content
+            </legend>
 
             <div class="field">
-              <label for="content">
-                Content
-                @if (selectedTemplate()?.name === 'Conversation v1') {
-                  <span class="hint"
-                    >— Use <code>Speaker: Message || </code>end of one dialog ||</span
-                  >
-                }
-                @if (selectedTemplate()?.name === 'Quote') {
-                  <span class="hint">— Quote text, then <code>-- Author</code></span>
-                }
-              </label>
-              <textarea
-                id="content"
-                rows="6"
-                [ngModel]="content()"
-                (ngModelChange)="content.set($event)"
-                name="content"
-                placeholder="Enter your content here..."
-              ></textarea>
-              <small>{{ content().length }} chars</small>
-            </div>
-          }
-
-          @if (contentSourceMode() === 'existing') {
-            <div class="field">
-              <label for="existingContent">Select Content</label>
-              <select
-                id="existingContent"
-                class="field-select"
-                [ngModel]="selectedContentItem()?.id || ''"
-                (ngModelChange)="onContentSelected($event)"
-                name="existingContent"
-              >
-                <option value="">-- Select content --</option>
-                @for (item of contentItems(); track item.id) {
-                  <option [value]="item.id">{{ item.title || '(Untitled)' }}</option>
-                }
-              </select>
-              @if (selectedContentItem()) {
+              <label>Source</label>
+              <div class="toggle-group" role="radiogroup" aria-label="Content source">
                 <button
                   type="button"
-                  class="btn sm ghost"
-                  (click)="selectedContentItem.set(null)"
-                >
-                  ✕ Clear
-                </button>
-              }
+                  role="radio"
+                  [attr.aria-checked]="contentSourceMode() === 'manual'"
+                  class="toggle-opt"
+                  [class.active]="contentSourceMode() === 'manual'"
+                  (click)="contentSourceMode.set('manual')"
+                >Write</button>
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="contentSourceMode() === 'existing'"
+                  class="toggle-opt"
+                  [class.active]="contentSourceMode() === 'existing'"
+                  (click)="contentSourceMode.set('existing')"
+                >Existing</button>
+              </div>
             </div>
-          }
-        </fieldset>
 
-          <fieldset>
-            <legend>Assets</legend>
-            <div class="asset-row">
+            @if (contentSourceMode() === 'manual') {
               <div class="field">
-                <label>Background</label>
-                <div class="bg-picker-group">
-                  <button type="button" class="btn ghost" (click)="openPicker('backgrounds')">
-                    {{ selectedBgImage() ? selectedBgImage()!.name : 'Image…' }}
-                  </button>
-                  <button type="button" class="btn ghost" (click)="openPicker('background-videos')">
-                    {{ selectedBgVideo() ? selectedBgVideo()!.name : 'Video…' }}
-                  </button>
+                <label for="title">Title</label>
+                <input
+                  id="title"
+                  type="text"
+                  [ngModel]="title()"
+                  (ngModelChange)="title.set($event)"
+                  name="title"
+                  maxlength="100"
+                  placeholder="e.g. Top 10 React Tips"
+                />
+              </div>
+
+              <div class="field">
+                <label for="content">Script</label>
+                <textarea
+                  id="content"
+                  rows="6"
+                  [ngModel]="content()"
+                  (ngModelChange)="content.set($event)"
+                  name="content"
+                  placeholder="Enter your content here..."
+                ></textarea>
+                <div class="field-foot">
+                  <span class="hint-text">
+                    @if (selectedTemplate()?.name === 'Conversation v1') {
+                      Use <code>Speaker: Message || </code>end of one dialog ||
+                    }
+                    @if (selectedTemplate()?.name === 'Quote') {
+                      Quote text, then <code>&ndash; Author</code>
+                    }
+                  </span>
+                  <span class="char-count">{{ content().length }}</span>
                 </div>
+              </div>
+            }
+
+            @if (contentSourceMode() === 'existing') {
+              <div class="field">
+                <label for="existingContent">Select Content</label>
+                <div class="select-row">
+                  <select
+                    id="existingContent"
+                    class="field-select"
+                    [ngModel]="selectedContentItem()?.id || ''"
+                    (ngModelChange)="onContentSelected($event)"
+                    name="existingContent"
+                  >
+                    <option value="">Choose…</option>
+                    @for (item of contentItems(); track item.id) {
+                      <option [value]="item.id">{{ item.title || '(Untitled)' }}</option>
+                    }
+                  </select>
+                  @if (selectedContentItem()) {
+                    <button
+                      type="button"
+                      class="btn sm ghost"
+                      (click)="selectedContentItem.set(null)"
+                    >Clear</button>
+                  }
+                </div>
+              </div>
+            }
+          </fieldset>
+
+          <fieldset class="section" [class.is-ready]="sectionAssetsComplete()">
+            <legend class="section-legend">
+              <span class="section-indicator" [class.done]="sectionAssetsComplete()"></span>
+              Assets
+            </legend>
+
+            <div class="field">
+              <label>Background</label>
+              <div class="asset-pair">
+                <button
+                  type="button"
+                  class="asset-btn"
+                  [class.selected]="!!selectedBgImage()"
+                  (click)="openPicker('backgrounds')"
+                >
+                  @if (selectedBgImage(); as img) {
+                    <span class="asset-check">✓</span>
+                    <span class="asset-label">{{ img.name }}</span>
+                  } @else {
+                    <span class="asset-label">Image…</span>
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="asset-btn"
+                  [class.selected]="!!selectedBgVideo()"
+                  (click)="openPicker('background-videos')"
+                >
+                  @if (selectedBgVideo(); as vid) {
+                    <span class="asset-check">✓</span>
+                    <span class="asset-label">{{ vid.name }}</span>
+                  } @else {
+                    <span class="asset-label">Video…</span>
+                  }
+                </button>
                 @if (selectedBgImage() || selectedBgVideo()) {
-                  <button type="button" class="btn sm ghost" (click)="clearBg()">✕ Clear</button>
+                  <button type="button" class="asset-clear" (click)="clearBg()">Clear</button>
                 }
               </div>
+            </div>
+
+            <div class="asset-row">
               <div class="field">
                 <label>Audio</label>
-                <button type="button" class="btn ghost full" (click)="openPicker('audios')">
-                  {{ selectedAudio() ? selectedAudio()!.name : 'Select…' }}
+                <button
+                  type="button"
+                  class="asset-btn full"
+                  [class.selected]="!!selectedAudio()"
+                  (click)="openPicker('audios')"
+                >
+                  @if (selectedAudio(); as a) {
+                    <span class="asset-check">✓</span>
+                    <span class="asset-label">{{ a.name }}</span>
+                  } @else {
+                    <span class="asset-label">Select track…</span>
+                  }
                 </button>
                 @if (selectedAudio()) {
-                  <button type="button" class="btn sm ghost" (click)="selectedAudio.set(null)">
-                    ✕ Clear
-                  </button>
+                  <button type="button" class="asset-clear" (click)="selectedAudio.set(null)">Clear</button>
                 }
               </div>
-            </div>
-            <div class="asset-row">
               <div class="field">
                 <label>Subscribe Image</label>
                 <button
                   type="button"
-                  class="btn ghost full"
+                  class="asset-btn full"
+                  [class.selected]="!!selectedSubscribeImage()"
                   (click)="openPicker('subscribe-images')"
                 >
-                  {{ selectedSubscribeImage() ? selectedSubscribeImage()!.name : 'Select…' }}
+                  @if (selectedSubscribeImage(); as s) {
+                    <span class="asset-check">✓</span>
+                    <span class="asset-label">{{ s.name }}</span>
+                  } @else {
+                    <span class="asset-label">Select image…</span>
+                  }
                 </button>
                 @if (selectedSubscribeImage()) {
                   <button
                     type="button"
-                    class="btn sm ghost"
+                    class="asset-clear"
                     (click)="selectedSubscribeImage.set(null)"
-                  >
-                    ✕ Clear
-                  </button>
+                  >Clear</button>
                 }
               </div>
             </div>
           </fieldset>
 
-          <fieldset>
-            <legend>Publishing</legend>
+          <fieldset class="section" [class.is-ready]="sectionPublishComplete()">
+            <legend class="section-legend">
+              <span class="section-indicator" [class.done]="sectionPublishComplete()"></span>
+              Publish
+            </legend>
+
             <div class="asset-row">
               <div class="field">
                 <label>Channel</label>
-                <button type="button" class="btn ghost full" (click)="openPicker('channels')">
-                  {{ selectedChannel() ? selectedChannel()!.name : 'Select…' }}
+                <button
+                  type="button"
+                  class="asset-btn full"
+                  [class.selected]="!!selectedChannel()"
+                  (click)="openPicker('channels')"
+                >
+                  @if (selectedChannel(); as ch) {
+                    <span class="asset-check">✓</span>
+                    <span class="asset-label">{{ ch.name }}</span>
+                  } @else {
+                    <span class="asset-label">Select channel…</span>
+                  }
                 </button>
-                @if (selectedChannel()) {
-                  <button type="button" class="btn sm ghost" (click)="selectedChannel.set(null)">
-                    ✕ Clear
-                  </button>
-                }
               </div>
               <div class="field">
-                <label for="publishAt">Publish Date</label>
+                <label for="publishAt">Schedule</label>
                 <input
                   id="publishAt"
                   type="datetime-local"
                   [(ngModel)]="publishDate"
                   name="publishDate"
                 />
+                <span class="field-hint">Leave empty to publish immediately</span>
               </div>
             </div>
           </fieldset>
 
-          <div class="actions">
-            <button type="submit" class="btn primary" [disabled]="!canGenerate() || generating()">
+          <div class="form-footer">
+            <div class="form-status">
+              @if (!canGenerate()) {
+                <span class="missing-hint">
+                  @if (!selectedTemplate()) {
+                    Select a template to get started
+                  } @else if (contentSourceMode() === 'manual' && (!title().trim() || !content().trim())) {
+                    Add a title and script
+                  } @else if (!selectedChannel()) {
+                    Choose a channel
+                  }
+                </span>
+              }
+            </div>
+            <button
+              type="submit"
+              class="btn btn-generate"
+              [disabled]="!canGenerate() || generating()"
+            >
               @if (generating()) {
                 <span class="spinner"></span>
                 Generating…
@@ -229,20 +289,34 @@ import { Router } from '@angular/router';
         <aside class="preview">
           <div class="preview-header">
             <h3>Preview</h3>
-            <span class="badge" *ngIf="selectedTemplate()">{{ selectedTemplate()!.name }}</span>
+            @if (selectedTemplate()) {
+              <span class="badge">{{ selectedTemplate()!.name }}</span>
+            }
           </div>
-          <div class="device">
-            <div class="device-content">
-              @if (previewHtml(); as html) {
-                <iframe [srcdoc]="safeHtml(html)" class="preview-frame" title="Preview"></iframe>
-              } @else {
-                <div class="placeholder">
-                  <span>◫</span>
-                  <p>Select a template and enter content</p>
-                </div>
+          <div class="device" [class.has-content]="!!previewHtml()">
+            <div class="device-notch"></div>
+            @if (previewHtml(); as html) {
+              <iframe [srcdoc]="safeHtml(html)" class="preview-frame" title="Preview"></iframe>
+            } @else {
+              <div class="placeholder">
+                <div class="placeholder-icon">◫</div>
+                <p>Select a template<br />and enter content</p>
+              </div>
+            }
+          </div>
+          @if (selectedTemplate()) {
+            <div class="preview-meta">
+              @if (selectedBgImage() || selectedBgVideo()) {
+                <span class="meta-chip">BG: {{ selectedBgImage()?.name || selectedBgVideo()?.name }}</span>
+              }
+              @if (selectedAudio()) {
+                <span class="meta-chip">Audio: {{ selectedAudio()!.name }}</span>
+              }
+              @if (!selectedBgImage() && !selectedBgVideo() && !selectedAudio()) {
+                <span class="meta-chip dim">No assets selected</span>
               }
             </div>
-          </div>
+          }
         </aside>
       </div>
     </div>
@@ -268,7 +342,7 @@ import { Router } from '@angular/router';
         color: var(--text);
         margin: 0;
       }
-      .page-header p {
+      .page-subtitle {
         color: var(--muted);
         margin: 0.2rem 0 0;
         font-size: 0.88rem;
@@ -278,24 +352,26 @@ import { Router } from '@angular/router';
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        padding: 0.75rem 1rem;
+        padding: 0.7rem 1rem;
         background: var(--border-subtle);
         border: 1px solid var(--border);
         border-radius: 0.65rem;
       }
-      .bar-label {
-        font-size: 0.82rem;
+      .template-bar-label {
+        font-size: 0.78rem;
         color: var(--muted);
-        font-weight: 500;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
         white-space: nowrap;
       }
       .template-options {
         display: flex;
-        gap: 0.4rem;
+        gap: 0.35rem;
         flex-wrap: wrap;
       }
       .template-chip {
-        padding: 0.35rem 0.85rem;
+        padding: 0.35rem 0.8rem;
         border-radius: 9999px;
         border: 1px solid var(--border);
         background: transparent;
@@ -304,6 +380,7 @@ import { Router } from '@angular/router';
         font-weight: 500;
         cursor: pointer;
         transition: all 0.15s;
+        font-family: inherit;
       }
       .template-chip:hover {
         border-color: var(--accent-weak);
@@ -338,45 +415,60 @@ import { Router } from '@angular/router';
       .form {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-      }
-      fieldset {
-        background: var(--border-subtle);
-        border: 1px solid var(--border);
-        border-radius: 0.75rem;
-        padding: 1.2rem;
-        display: flex;
-        flex-direction: column;
         gap: 0.85rem;
       }
-      legend {
+
+      .section {
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--border);
+        border-radius: 0.65rem;
+        padding: 1.15rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        transition: border-left-color 0.25s ease;
+      }
+      .section.is-ready {
+        border-left-color: var(--accent);
+      }
+
+      .section-legend {
         color: var(--text);
         font-weight: 600;
-        font-size: 0.88rem;
+        font-size: 0.95rem;
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
+      .section-indicator {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--border);
+        transition: background 0.25s ease;
+        flex-shrink: 0;
+      }
+      .section-indicator.done {
+        background: var(--accent);
+      }
+
       .field {
         display: flex;
         flex-direction: column;
         gap: 0.3rem;
       }
-      .field label {
-        font-size: 0.82rem;
+      .field > label {
+        font-size: 0.8rem;
         color: var(--muted);
         font-weight: 500;
       }
-      .field label .hint {
-        color: var(--accent);
-        font-weight: 400;
-      }
-      .field label .hint code {
-        background: var(--border-subtle);
-        padding: 0.05rem 0.3rem;
-        border-radius: 0.2rem;
-        font-size: 0.78rem;
-      }
       .field input,
-      .field textarea {
-        background: var(--border-subtle);
+      .field textarea,
+      .field-select {
+        background: var(--bg);
         border: 1px solid var(--border);
         color: var(--text);
         padding: 0.55rem 0.8rem;
@@ -384,9 +476,11 @@ import { Router } from '@angular/router';
         font-size: 0.88rem;
         width: 100%;
         font-family: inherit;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
       }
       .field input:focus,
-      .field textarea:focus {
+      .field textarea:focus,
+      .field-select:focus {
         outline: none;
         border-color: var(--accent);
         box-shadow: 0 0 0 3px var(--accent-weak);
@@ -396,47 +490,94 @@ import { Router } from '@angular/router';
         min-height: 100px;
       }
       .field-select {
-        background: var(--border-subtle);
-        border: 1px solid var(--border);
-        color: var(--text);
-        padding: 0.55rem 0.8rem;
-        border-radius: 0.5rem;
-        font-size: 0.88rem;
-        width: 100%;
-      }
-      .field-select:focus {
-        outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-weak);
-      }
-      .field small {
-        font-size: 0.72rem;
-        color: var(--muted);
-        text-align: right;
-      }
-      .mode-toggle {
-        display: flex;
-        gap: 1.25rem;
-      }
-      .mode-option {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.88rem;
-        color: var(--text);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7a8c'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.7rem center;
+        padding-right: 2rem;
         cursor: pointer;
       }
+      .field-select option {
+        background: var(--surface);
+        color: var(--text);
+      }
+
+      .toggle-group {
+        display: flex;
+        gap: 0;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        overflow: hidden;
+        width: fit-content;
+      }
+      .toggle-opt {
+        padding: 0.4rem 0.9rem;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+      }
+      .toggle-opt:hover {
+        color: var(--text);
+      }
+      .toggle-opt.active {
+        background: var(--accent);
+        color: #fff;
+      }
+      .toggle-opt:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+      }
+
+      .select-row {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+      }
+      .select-row .field-select {
+        flex: 1;
+      }
+
+      .field-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 1.2rem;
+      }
+      .hint-text {
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-style: italic;
+      }
+      .hint-text code {
+        background: var(--border-subtle);
+        padding: 0.05rem 0.3rem;
+        border-radius: 0.2rem;
+        font-size: 0.72rem;
+        color: var(--accent);
+      }
+      .char-count {
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+      }
+      .field-hint {
+        font-size: 0.7rem;
+        color: var(--muted);
+        margin-top: 0.1rem;
+      }
+
       .asset-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
-      }
-      .bg-picker-group {
-        display: flex;
-        gap: 0.35rem;
-      }
-      .bg-picker-group .btn {
-        flex: 1;
       }
       @media (max-width: 600px) {
         .asset-row {
@@ -444,10 +585,94 @@ import { Router } from '@angular/router';
         }
       }
 
-      .actions {
+      .asset-pair {
         display: flex;
-        justify-content: flex-end;
+        gap: 0.35rem;
+        align-items: center;
+        flex-wrap: wrap;
       }
+      .asset-pair .asset-btn {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .asset-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.75rem;
+        border-radius: 0.45rem;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: inherit;
+        text-align: left;
+      }
+      .asset-btn:hover {
+        border-color: var(--accent-weak);
+        color: var(--text);
+      }
+      .asset-btn.selected {
+        border-color: var(--accent);
+        background: var(--accent-weak);
+        color: var(--text);
+      }
+      .asset-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .asset-btn.full {
+        width: 100%;
+      }
+      .asset-check {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+      .asset-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .asset-clear {
+        padding: 0.25rem 0.55rem;
+        border-radius: 0.35rem;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: inherit;
+      }
+      .asset-clear:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+        background: rgba(224, 72, 58, 0.08);
+      }
+
+      .form-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-top: 0.25rem;
+      }
+      .form-status {
+        min-height: 1.1rem;
+      }
+      .missing-hint {
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-style: italic;
+      }
+
       .btn {
         padding: 0.5rem 1rem;
         border-radius: 0.5rem;
@@ -459,20 +684,7 @@ import { Router } from '@angular/router';
         gap: 0.4rem;
         align-items: center;
         transition: all 0.15s ease;
-      }
-      .btn.primary {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-        min-width: 140px;
-        justify-content: center;
-      }
-      .btn.primary:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .btn.primary:hover:not(:disabled) {
-        filter: brightness(1.1);
+        font-family: inherit;
       }
       .btn.ghost {
         background: transparent;
@@ -486,11 +698,23 @@ import { Router } from '@angular/router';
         padding: 0.25rem 0.5rem;
         font-size: 0.75rem;
       }
-      .btn.full {
+      .btn-generate {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
         width: 100%;
-        justify-content: flex-start;
-        text-align: left;
+        justify-content: center;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
       }
+      .btn-generate:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-generate:hover:not(:disabled) {
+        filter: brightness(1.1);
+      }
+
       .spinner {
         width: 1rem;
         height: 1rem;
@@ -509,7 +733,7 @@ import { Router } from '@angular/router';
       .preview {
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
+        gap: 0.65rem;
       }
       .preview-header {
         display: flex;
@@ -522,50 +746,86 @@ import { Router } from '@angular/router';
         color: var(--text);
       }
       .badge {
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         padding: 0.15rem 0.45rem;
         border-radius: 9999px;
-        background: var(--border-subtle);
-        border: 1px solid var(--border);
-        color: var(--muted);
+        background: var(--accent-weak);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        font-weight: 500;
       }
       .device {
         width: 270px;
         height: 480px;
-        border-radius: 0.9rem;
+        border-radius: 1.1rem;
         border: 1px solid var(--border);
         overflow: hidden;
         position: relative;
         background: #09090b;
         flex-shrink: 0;
+        align-self: center;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
       }
-
-      .device-content {
+      .device.has-content {
+        border-color: var(--accent-weak);
+        box-shadow: 0 0 24px rgba(232, 184, 75, 0.07);
+      }
+      .device-notch {
         position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 16px;
+        background: #09090b;
+        border-radius: 0 0 10px 10px;
+        z-index: 2;
       }
       .preview-frame {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         border: none;
       }
       .placeholder {
+        position: absolute;
+        inset: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         gap: 0.5rem;
         color: var(--muted);
       }
-      .placeholder span {
-        font-size: 2rem;
-        opacity: 0.4;
+      .placeholder-icon {
+        font-size: 1.6rem;
+        opacity: 0.3;
       }
       .placeholder p {
         margin: 0;
-        font-size: 0.82rem;
+        font-size: 0.78rem;
+        text-align: center;
+        line-height: 1.4;
+        opacity: 0.6;
+      }
+
+      .preview-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+      }
+      .meta-chip {
+        font-size: 0.66rem;
+        padding: 0.12rem 0.4rem;
+        border-radius: 3px;
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      }
+      .meta-chip.dim {
+        opacity: 0.5;
       }
     `,
   ],
@@ -592,6 +852,20 @@ export class CreateVideoComponent implements OnInit {
   publishDate = '';
 
   generating = signal(false);
+
+  sectionContentComplete = computed(() => {
+    if (this.contentSourceMode() === 'manual')
+      return !!this.title().trim() && !!this.content().trim();
+    return !!this.selectedContentItem();
+  });
+
+  sectionAssetsComplete = computed(() => {
+    return !!(this.selectedBgImage() || this.selectedBgVideo());
+  });
+
+  sectionPublishComplete = computed(() => {
+    return !!this.selectedChannel();
+  });
 
   private readonly api: ApiService;
   private readonly sanitizer: DomSanitizer;
