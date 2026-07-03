@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService, Template } from '../../services/api.service';
+import { ApiService, Template, ContentItem } from '../../services/api.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
   AssetPickerComponent,
@@ -39,10 +39,37 @@ import { Router } from '@angular/router';
       </div>
 
       <div class="split">
-        <form class="form" (ngSubmit)="doGenerate()">
-          <fieldset>
-            <legend>Details</legend>
+      <form class="form" (ngSubmit)="doGenerate()">
+        <fieldset>
+          <legend>Details</legend>
 
+          <div class="field">
+            <label>Content Source</label>
+            <div class="mode-toggle">
+              <label class="mode-option">
+                <input
+                  type="radio"
+                  name="contentSource"
+                  [value]="'manual'"
+                  [ngModel]="contentSourceMode()"
+                  (ngModelChange)="contentSourceMode.set($event)"
+                />
+                Write manually
+              </label>
+              <label class="mode-option">
+                <input
+                  type="radio"
+                  name="contentSource"
+                  [value]="'existing'"
+                  [ngModel]="contentSourceMode()"
+                  (ngModelChange)="contentSourceMode.set($event)"
+                />
+                Use existing content
+              </label>
+            </div>
+          </div>
+
+          @if (contentSourceMode() === 'manual') {
             <div class="field">
               <label for="title">Title</label>
               <input
@@ -79,7 +106,35 @@ import { Router } from '@angular/router';
               ></textarea>
               <small>{{ content().length }} chars</small>
             </div>
-          </fieldset>
+          }
+
+          @if (contentSourceMode() === 'existing') {
+            <div class="field">
+              <label for="existingContent">Select Content</label>
+              <select
+                id="existingContent"
+                class="field-select"
+                [ngModel]="selectedContentItem()?.id || ''"
+                (ngModelChange)="onContentSelected($event)"
+                name="existingContent"
+              >
+                <option value="">-- Select content --</option>
+                @for (item of contentItems(); track item.id) {
+                  <option [value]="item.id">{{ item.title || '(Untitled)' }}</option>
+                }
+              </select>
+              @if (selectedContentItem()) {
+                <button
+                  type="button"
+                  class="btn sm ghost"
+                  (click)="selectedContentItem.set(null)"
+                >
+                  ✕ Clear
+                </button>
+              }
+            </div>
+          }
+        </fieldset>
 
           <fieldset>
             <legend>Assets</legend>
@@ -340,10 +395,36 @@ import { Router } from '@angular/router';
         resize: vertical;
         min-height: 100px;
       }
+      .field-select {
+        background: var(--border-subtle);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 0.55rem 0.8rem;
+        border-radius: 0.5rem;
+        font-size: 0.88rem;
+        width: 100%;
+      }
+      .field-select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-weak);
+      }
       .field small {
         font-size: 0.72rem;
         color: var(--muted);
         text-align: right;
+      }
+      .mode-toggle {
+        display: flex;
+        gap: 1.25rem;
+      }
+      .mode-option {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.88rem;
+        color: var(--text);
+        cursor: pointer;
       }
       .asset-row {
         display: grid;
@@ -494,6 +575,9 @@ export class CreateVideoComponent implements OnInit {
   selectedTemplate = signal<Template | null>(null);
   title = signal('');
   content = signal('');
+  contentSourceMode = signal<'manual' | 'existing'>('manual');
+  contentItems = signal<ContentItem[]>([]);
+  selectedContentItem = signal<ContentItem | null>(null);
 
   showPicker = signal(false);
   pickerType = signal<
@@ -521,6 +605,7 @@ export class CreateVideoComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.getTemplates().subscribe({ next: (t) => this.templates.set(t) });
+    this.api.getContentItems().subscribe({ next: (items) => this.contentItems.set(items) });
   }
 
   selectTemplate(t: Template) {
@@ -608,12 +693,33 @@ export class CreateVideoComponent implements OnInit {
   }
 
   canGenerate(): boolean {
+    const hasChannel = !!this.selectedChannel();
+    if (this.contentSourceMode() === 'manual') {
+      return (
+        !!this.selectedTemplate() &&
+        !!this.title().trim() &&
+        !!this.content().trim() &&
+        hasChannel
+      );
+    }
     return (
       !!this.selectedTemplate() &&
-      !!this.title().trim() &&
-      !!this.content().trim() &&
-      !!this.selectedChannel()
+      !!this.selectedContentItem() &&
+      hasChannel
     );
+  }
+
+  onContentSelected(id: string) {
+    if (!id) {
+      this.selectedContentItem.set(null);
+      return;
+    }
+    const item = this.contentItems().find((c) => c.id === id) || null;
+    this.selectedContentItem.set(item);
+    if (item) {
+      this.title.set(item.title || '');
+      this.content.set(item.content || '');
+    }
   }
 
   doGenerate() {
@@ -628,26 +734,50 @@ export class CreateVideoComponent implements OnInit {
     const bgImage = this.selectedBgImage();
     const bgVideo = this.selectedBgVideo();
 
-    this.api
-      .generateFromTemplate(template.id, {
-        content: this.content().trim(),
-        title: this.title().trim(),
-        backgroundId: bgImage?.id,
-        backgroundVideoId: bgVideo?.id,
-        audioId: this.selectedAudio()?.id,
-        subscribeImageId: this.selectedSubscribeImage()?.id,
-        channelId: this.selectedChannel()?.id || '',
-        publishedDate,
-      })
-      .subscribe({
-        next: (res) => {
-          this.generating.set(false);
-          this.router.navigate(['/generation', res.metadata.id]);
-        },
-        error: (err) => {
-          this.generating.set(false);
-          alert(err?.error?.message || err?.message || 'Generation failed');
-        },
-      });
+    const commonPayload = {
+      backgroundVideoId: bgVideo?.id,
+      audioId: this.selectedAudio()?.id,
+      subscribeImageId: this.selectedSubscribeImage()?.id,
+      channelId: this.selectedChannel()?.id || '',
+      publishedDate,
+    };
+
+    const finish = (err?: any) => {
+      this.generating.set(false);
+      if (err) {
+        alert(err?.error?.message || err?.message || 'Generation failed');
+      }
+    };
+
+    if (this.contentSourceMode() === 'existing' && this.selectedContentItem()) {
+      this.api
+        .generateFromTemplateWithContent(
+          template.id,
+          this.selectedContentItem()!.id,
+          commonPayload,
+        )
+        .subscribe({
+          next: (res) => {
+            finish();
+            this.router.navigate(['/generation', res.metadata.id]);
+          },
+          error: (err) => finish(err),
+        });
+    } else {
+      this.api
+        .generateFromTemplate(template.id, {
+          ...commonPayload,
+          content: this.content().trim(),
+          title: this.title().trim(),
+          backgroundId: bgImage?.id,
+        })
+        .subscribe({
+          next: (res) => {
+            finish();
+            this.router.navigate(['/generation', res.metadata.id]);
+          },
+          error: (err) => finish(err),
+        });
+    }
   }
 }

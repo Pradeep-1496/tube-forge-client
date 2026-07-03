@@ -26,6 +26,8 @@ export const environment = {
         `/api/video-generation/generate-from-video/${videoContentId}/${backgroundVideoId}`,
       generateFromTemplate: (templateId: string) =>
         `/api/video-generation/generate-from-template/${templateId}`,
+      generateFromTemplateWithContent: (templateId: string, contentId: string) =>
+        `/api/video-generation/generate-from-template/${templateId}/${contentId}`,
       themes: '/api/video-generation/themes',
     },
     backgrounds: {

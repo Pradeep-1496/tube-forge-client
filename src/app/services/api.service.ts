@@ -531,6 +531,21 @@ export class ApiService {
     return this.http.post<GenerateFromVideoResponse>(url, payload);
   }
 
+  generateFromTemplateWithContent(
+    templateId: string,
+    contentId: string,
+    payload: {
+      backgroundVideoId?: string;
+      audioId?: string;
+      subscribeImageId?: string;
+      channelId: string;
+      publishedDate: string;
+    },
+  ) {
+    const url = `${this.baseUrl}${environment.apiEndpoints.videoGeneration.generateFromTemplateWithContent(templateId, contentId)}`;
+    return this.http.post<GenerateFromVideoResponse>(url, payload);
+  }
+
   generateFromVideo(
     videoContentId: string,
     backgroundVideoId: string,
