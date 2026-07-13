@@ -15,6 +15,9 @@ import { GenerationDetailComponent } from './pages/generation/detail/generation-
 import { GenerateFromVideoComponent } from './pages/generate-from-video/generate-from-video.component';
 import { DraftEditComponent } from './pages/draft-edit/draft-edit.component';
 import { VideoMetadataComponent } from './pages/video-metadata/video-metadata.component';
+import { YoutubeConnectPage } from './pages/youtube/connect/connect.page';
+import { YoutubeCallbackPage } from './pages/youtube/callback/callback.page';
+import { MetadataDetailPage } from './pages/metadata/detail/detail.page';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -40,6 +43,9 @@ export const routes: Routes = [
       { path: 'drafts', redirectTo: 'video-metadata', pathMatch: 'full' },
       { path: 'draft/edit/:id', component: DraftEditComponent },
       { path: 'generation/:id', component: GenerationDetailComponent },
+      { path: 'youtube/connect', component: YoutubeConnectPage },
+      { path: 'youtube/callback', component: YoutubeCallbackPage },
+      { path: 'metadata/:id/upload', component: MetadataDetailPage },
       { path: '**', redirectTo: 'dashboard' },
     ],
   },

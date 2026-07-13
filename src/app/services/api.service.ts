@@ -257,6 +257,13 @@ export interface UploadResult {
   error?: string;
 }
 
+export interface YouTubeUploadResult {
+  message: string;
+  videoId: string;
+  youtubeUrl: string;
+  metadataId: string;
+}
+
 export interface GenerateFromVideoResponse {
   outputPath: string;
   metadata: {
@@ -458,6 +465,14 @@ export class ApiService {
 
   uploadVideoToYouTube(payload: { videoId: string; publishAt?: string }) {
     return this.http.post<UploadResult>(`${this.baseUrl}/api/youtube/upload`, payload);
+  }
+
+  getYouTubeLoginUrl() {
+    return this.http.get<{ url: string }>(`${this.baseUrl}/api/youtube/login`);
+  }
+
+  uploadToYoutubeByMetadata(metadataId: string) {
+    return this.http.post<YouTubeUploadResult>(`${this.baseUrl}/api/youtube/upload`, { metadataId });
   }
 
   getTemplates() {
