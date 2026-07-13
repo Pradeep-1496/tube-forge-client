@@ -52,6 +52,10 @@ import { AuthService } from '../../../services/auth.service';
           <span class="icon">▶</span>
           @if (!collapsed()) { <span>Create from Video</span> }
         </a>
+        <a routerLink="/youtube/connect" routerLinkActive="active" class="nav-item">
+          <span class="icon">▶</span>
+          @if (!collapsed()) { <span>YouTube Connect</span> }
+        </a>
         <a routerLink="/settings" routerLinkActive="active" class="nav-item">
           <span class="icon">⚙</span>
           @if (!collapsed()) { <span>Settings</span> }
