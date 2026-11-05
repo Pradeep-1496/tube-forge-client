@@ -1,0 +1,47 @@
+name: Run Angular App and Verify
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allows you to run it manually via the GitHub interface button
+
+jobs:
+  run-and-capture:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Get your code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Node.js (v18+)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Start the Angular development server in the background
+      - name: Start Angular Server
+        run: npm start &
+
+      # Step 5: Wait 15 seconds for Angular to completely compile and spin up port 4200
+      - name: Wait for server to boot
+        run: sleep 15
+
+      # Step 6: Capture a screenshot of the running application using standard Linux tools
+      - name: Capture App Screenshot
+        run: |
+          sudo apt-get update && sudo apt-get install -y chromium-browser
+          chromium-browser --headless --disable-gpu --screenshot=angular-app-screenshot.png --window-size=1280,800 http://localhost:4200
+
+      # Step 7: Upload the screenshot so you can see it in your browser
+      - name: Upload Screenshot Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: angular-live-view
+          path: angular-app-screenshot.png
