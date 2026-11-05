@@ -1,0 +1,18 @@
+{
+  "routes": {
+    "/": {},
+    "/audios": {},
+    "/backgrounds": {},
+    "/channels": {},
+    "/content": {},
+    "/create": {},
+    "/dashboard": {},
+    "/login": {},
+    "/register": {},
+    "/settings": {},
+    "/subscribe-images": {},
+    "/video-metadata": {},
+    "/youtube/callback": {},
+    "/youtube/connect": {}
+  }
+}
